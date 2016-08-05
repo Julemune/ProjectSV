@@ -9,6 +9,9 @@
 #import "MenuScene.h"
 #import "GameScene.h"
 
+#define BACKGROUND_SPRITE_1 @"BackgroundSprite1"
+#define BACKGROUND_SPRITE_2 @"BackgroundSprite2"
+
 @interface MenuScene()
 
 @property (assign, nonatomic) BOOL contentCreated;
@@ -34,6 +37,8 @@
         
         CGPoint location = [touch locationInNode:self];
         
+        NSLog(@"%@", NSStringFromCGPoint(location));
+        
         if (CGRectContainsPoint([self childNodeWithName:@"StartGame"].frame, location)) {
             
             [self presentGameScene];
@@ -44,13 +49,36 @@
     
 }
 
+- (void)update:(NSTimeInterval)currentTime {
+    
+    SKSpriteNode *backgroundSprite1 = (SKSpriteNode *)[self childNodeWithName:BACKGROUND_SPRITE_1];
+    SKSpriteNode *backgroundSprite2 = (SKSpriteNode *)[self childNodeWithName:BACKGROUND_SPRITE_2];
+    
+    [BasicScene moveBackgroundWithFirstSprite:backgroundSprite1 secondSprite:backgroundSprite2];
+    
+}
+
 #pragma mark - Methods
 
 - (void)createSceneContents {
     
+    //Create background
+    SKTexture *backgroundTexture = [BasicScene createTitleTextureWithImageNamed:@"blue"
+                                                             coverageSize:CGSizeMake(self.size.width, self.size.height)
+                                                              textureSize:CGRectMake(0, 0, 256, 256)];
+    
+    SKSpriteNode *backgroundSprite1 = [BasicScene createFirstBackgroundSpriteWithName:BACKGROUND_SPRITE_1 texture:backgroundTexture];
+    [self addChild:backgroundSprite1];
+    
+    
+    SKSpriteNode *backgroundSprite2 = [BasicScene createSecondBackgroundSpriteWithName:BACKGROUND_SPRITE_2 texture:backgroundTexture firstSprite:backgroundSprite1];
+    [self addChild:backgroundSprite2];
+    
+    //Create menu items
     SKLabelNode *startGameLabel = [SKLabelNode labelNodeWithText:@"Start Game"];
     
     startGameLabel.position = CGPointMake(CGRectGetMidX(self.frame),CGRectGetMidY(self.frame));
+    startGameLabel.zPosition = 1;
     startGameLabel.fontName = @"KenVector Future";
     startGameLabel.fontSize = 20;
     startGameLabel.fontColor = [SKColor whiteColor];

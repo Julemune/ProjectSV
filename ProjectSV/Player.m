@@ -1,14 +1,13 @@
 //
-//  MenuScene.h
+//  Player.m
 //  ProjectSV
 //
 //  Created by Julemune on 05.08.16.
 //  Copyright © 2016 Julemune. All rights reserved.
 //
 
-#import <SpriteKit/SpriteKit.h>
-#import "BasicScene.h"
+#import "Player.h"
 
-@interface MenuScene : BasicScene
+@implementation Player
 
 @end

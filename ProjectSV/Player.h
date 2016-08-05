@@ -1,5 +1,5 @@
 //
-//  MenuScene.h
+//  Player.h
 //  ProjectSV
 //
 //  Created by Julemune on 05.08.16.
@@ -7,8 +7,7 @@
 //
 
 #import <SpriteKit/SpriteKit.h>
-#import "BasicScene.h"
 
-@interface MenuScene : BasicScene
+@interface Player : SKSpriteNode
 
 @end
