@@ -9,8 +9,8 @@
 #import "MenuScene.h"
 #import "GameScene.h"
 
-#define BACKGROUND_SPRITE_1 @"BackgroundSprite1"
-#define BACKGROUND_SPRITE_2 @"BackgroundSprite2"
+#define BACKGROUND_SPRITE_1 @"backgroundSprite1"
+#define BACKGROUND_SPRITE_2 @"backgroundSprite2"
 
 @interface MenuScene()
 
@@ -36,8 +36,6 @@
     for (UITouch *touch in touches) {
         
         CGPoint location = [touch locationInNode:self];
-        
-        NSLog(@"%@", NSStringFromCGPoint(location));
         
         if (CGRectContainsPoint([self childNodeWithName:@"StartGame"].frame, location)) {
             
@@ -70,7 +68,6 @@
     SKSpriteNode *backgroundSprite1 = [BasicScene createFirstBackgroundSpriteWithName:BACKGROUND_SPRITE_1 texture:backgroundTexture];
     [self addChild:backgroundSprite1];
     
-    
     SKSpriteNode *backgroundSprite2 = [BasicScene createSecondBackgroundSpriteWithName:BACKGROUND_SPRITE_2 texture:backgroundTexture firstSprite:backgroundSprite1];
     [self addChild:backgroundSprite2];
     
@@ -78,7 +75,7 @@
     SKLabelNode *startGameLabel = [SKLabelNode labelNodeWithText:@"Start Game"];
     
     startGameLabel.position = CGPointMake(CGRectGetMidX(self.frame),CGRectGetMidY(self.frame));
-    startGameLabel.zPosition = 1;
+    startGameLabel.zPosition = 5;
     startGameLabel.fontName = @"KenVector Future";
     startGameLabel.fontSize = 20;
     startGameLabel.fontColor = [SKColor whiteColor];
