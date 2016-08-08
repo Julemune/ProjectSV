@@ -1,17 +1,8 @@
-//
-//  GameScene.m
-//  ProjectSV
-//
-//  Created by Julemune on 05.08.16.
-//  Copyright © 2016 Julemune. All rights reserved.
-//
-
 #import "GameScene.h"
 
-#import "Player.h"
+#import "SceneManager.h"
 
-#define BACKGROUND_SPRITE_1 @"backgroundSprite1"
-#define BACKGROUND_SPRITE_2 @"backgroundSprite2"
+#import "Player.h"
 
 #define LEFT_FLAT_CONTROL       @"leftFlatControl"
 #define RIGHT_FLAT_CONTROL      @"rightFlatControl"
@@ -27,6 +18,8 @@
 @interface GameScene()
 
 @property (assign, nonatomic) BOOL contentCreated;
+@property (assign, nonatomic) NSInteger starCounter;
+
 @property (assign, nonatomic) BOOL leftControlPressed;
 @property (assign, nonatomic) BOOL rightControlPressed;
 @property (assign, nonatomic) BOOL shotControlPressed;
@@ -97,14 +90,16 @@
 
 - (void)update:(NSTimeInterval)currentTime {
     
-    [self moveBackground];
+    [[SceneManager sharedSceneManager] moveSceneWithScene:self];
     
-    if (self.leftControlPressed && self.player.position.x - (self.player.size.width / 2) > 0) {
-        self.player.position = CGPointMake(self.player.position.x - self.player.speed, self.player.position.y);
+    if (self.starCounter > 20) {
+        [self addChild:[[SceneManager sharedSceneManager] generateStarWithViewSize:self.size]];
+        self.starCounter = 0;
+    } else {
+        self.starCounter ++;
     }
-    if (self.rightControlPressed && self.player.position.x + (self.player.size.width / 2) < self.size.width) {
-        self.player.position = CGPointMake(self.player.position.x + self.player.speed, self.player.position.y);
-    }
+    
+    [self controlsActions];
     
 }
 
@@ -112,15 +107,16 @@
 
 - (void)createSceneContents {
     
-    [self createControls];
-    [self createBackground];
+    self.starCounter = 0;
+    [[SceneManager sharedSceneManager] generateBasicStars:self];
+    [[SceneManager sharedSceneManager] createBackgroundWithScene:self imageNamed:@"purple"];
     
-    self.player = [Player spriteNodeWithImageNamed:@"player"];
+    [self createControls];
+    
+    self.player = [Player playerWithPlayerType:[SceneManager sharedSceneManager].playerType];
     self.player.position = CGPointMake(CGRectGetMidX(self.frame), self.size.height/5);
     self.player.zPosition = 5;
-    [self.player setScale:0.2];
-    
-    self.player.speed = 8;
+    [self.player setScale:0.8];
     
     self.player.name = PLAYER;
     [self addChild:self.player];
@@ -128,117 +124,57 @@
 }
 
 - (void)createControls {
-    
-    //Left control
-    SKSpriteNode *leftControl = [SKSpriteNode spriteNodeWithImageNamed:LEFT_SHADED_CONTROL];
-    
-    leftControl.anchorPoint = CGPointMake(0, 0);
+
+    SKSpriteNode *leftControl = [self createControlWithName:LEFT_SHADED_CONTROL pressedControlName:LEFT_FLAT_CONTROL];
     leftControl.position = CGPointMake(10, 10);
-    leftControl.zPosition = 10;
-    leftControl.name = LEFT_SHADED_CONTROL;
-    [leftControl setScale:0.8];
-    
     [self addChild:leftControl];
     
-    SKSpriteNode *leftControlPressed = [SKSpriteNode spriteNodeWithImageNamed:LEFT_FLAT_CONTROL];
-    
-    leftControlPressed.anchorPoint = CGPointMake(0, 0);
-    leftControlPressed.position = CGPointMake(0, 0);
-    leftControlPressed.zPosition = 10;
-    leftControlPressed.name = LEFT_FLAT_CONTROL;
-    [leftControlPressed setScale:1];
-    leftControlPressed.hidden = YES;
-    
-    [leftControl addChild:leftControlPressed];
-    
-    //Right control
-    SKSpriteNode *rightControl = [SKSpriteNode spriteNodeWithImageNamed:RIGHT_SHADED_CONTROL];
-    
-    rightControl.anchorPoint = CGPointMake(0, 0);
+    SKSpriteNode *rightControl = [self createControlWithName:RIGHT_SHADED_CONTROL pressedControlName:RIGHT_FLAT_CONTROL];
     rightControl.position = CGPointMake(leftControl.position.x + leftControl.size.width + 10, 10);
-    rightControl.zPosition = 10;
-    rightControl.name = RIGHT_SHADED_CONTROL;
-    [rightControl setScale:0.8];
-    
     [self addChild:rightControl];
     
-    SKSpriteNode *rightControlPressed = [SKSpriteNode spriteNodeWithImageNamed:RIGHT_FLAT_CONTROL];
-    
-    rightControlPressed.anchorPoint = CGPointMake(0, 0);
-    rightControlPressed.position = CGPointMake(0, 0);
-    rightControlPressed.zPosition = 10;
-    rightControlPressed.name = RIGHT_FLAT_CONTROL;
-    [rightControlPressed setScale:1];
-    rightControlPressed.hidden = YES;
-    
-    [rightControl addChild:rightControlPressed];
-    
-    //Shot control
-    SKSpriteNode *shotControl = [SKSpriteNode spriteNodeWithImageNamed:SHOT_SHADED_CONTROL];
-    
-    shotControl.anchorPoint = CGPointMake(0, 0);
+    SKSpriteNode *shotControl = [self createControlWithName:SHOT_SHADED_CONTROL pressedControlName:SHOT_FLAT_CONTROL];
     shotControl.position = CGPointMake(self.size.width - shotControl.size.width - shotControl.size.width / 2, 10);
-    shotControl.zPosition = 10;
-    shotControl.name = SHOT_SHADED_CONTROL;
-    [shotControl setScale:0.8];
-    
     [self addChild:shotControl];
     
-    SKSpriteNode *shotControlPressed = [SKSpriteNode spriteNodeWithImageNamed:SHOT_FLAT_CONTROL];
-    
-    shotControlPressed.anchorPoint = CGPointMake(0, 0);
-    shotControlPressed.position = CGPointMake(0, 0);
-    shotControlPressed.zPosition = 10;
-    shotControlPressed.name = SHOT_FLAT_CONTROL;
-    [shotControlPressed setScale:1];
-    shotControlPressed.hidden = YES;
-    
-    [shotControl addChild:shotControlPressed];
-    
-    //Shield control
-    SKSpriteNode *shieldControl = [SKSpriteNode spriteNodeWithImageNamed:SHIELD_SHADED_CONTROL];
-    
-    shieldControl.anchorPoint = CGPointMake(0, 0);
-    shieldControl.position = CGPointMake(self.size.width - shieldControl.size.width, shotControl.position.y + shotControl.size.height + 10);
-    shieldControl.zPosition = 10;
-    shieldControl.name = SHIELD_SHADED_CONTROL;
-    [shieldControl setScale:0.8];
-    
+    SKSpriteNode *shieldControl = [self createControlWithName:SHIELD_SHADED_CONTROL pressedControlName:SHIELD_FLAT_CONTROL];
+    shieldControl.position = CGPointMake(self.size.width - shieldControl.size.width - 10, shotControl.position.y + shotControl.size.height + 10);
     [self addChild:shieldControl];
     
-    SKSpriteNode *shieldControlPressed = [SKSpriteNode spriteNodeWithImageNamed:SHIELD_FLAT_CONTROL];
-    
-    shieldControlPressed.anchorPoint = CGPointMake(0, 0);
-    shieldControlPressed.position = CGPointMake(0, 0);
-    shieldControlPressed.zPosition = 10;
-    shieldControlPressed.name = SHIELD_FLAT_CONTROL;
-    [shieldControlPressed setScale:1];
-    shieldControlPressed.hidden = YES;
-    
-    [shieldControl addChild:shieldControlPressed];
-    
 }
 
-- (void)createBackground {
+- (SKSpriteNode *)createControlWithName:(NSString *)name pressedControlName:(NSString *)pressedName {
     
-    SKTexture *backgroundTexture = [BasicScene createTitleTextureWithImageNamed:@"purple"
-                                                                   coverageSize:CGSizeMake(self.size.width, self.size.height)
-                                                                    textureSize:CGRectMake(0, 0, 256, 256)];
+    SKSpriteNode *control = [SKSpriteNode spriteNodeWithImageNamed:name];
     
-    SKSpriteNode *backgroundSprite1 = [BasicScene createFirstBackgroundSpriteWithName:BACKGROUND_SPRITE_1 texture:backgroundTexture];
-    [self addChild:backgroundSprite1];
+    control.anchorPoint = CGPointMake(0, 0);
+    control.zPosition = 10;
+    control.name = name;
+    [control setScale:0.8];
     
+    SKSpriteNode *controlPressed = [SKSpriteNode spriteNodeWithImageNamed:pressedName];
     
-    SKSpriteNode *backgroundSprite2 = [BasicScene createSecondBackgroundSpriteWithName:BACKGROUND_SPRITE_2 texture:backgroundTexture firstSprite:backgroundSprite1];
-    [self addChild:backgroundSprite2];
+    controlPressed.anchorPoint = CGPointMake(0, 0);
+    controlPressed.position = CGPointMake(0, 0);
+    controlPressed.zPosition = 10;
+    controlPressed.name = pressedName;
+    [controlPressed setScale:1];
+    controlPressed.hidden = YES;
     
+    [control addChild:controlPressed];
+    
+    return control;
 }
 
-- (void)moveBackground {
+- (void)controlsActions {
     
-    SKSpriteNode *backgroundSprite1 = (SKSpriteNode *)[self childNodeWithName:BACKGROUND_SPRITE_1];
-    SKSpriteNode *backgroundSprite2 = (SKSpriteNode *)[self childNodeWithName:BACKGROUND_SPRITE_2];
-    [BasicScene moveBackgroundWithFirstSprite:backgroundSprite1 secondSprite:backgroundSprite2];
+    if (self.leftControlPressed && self.player.position.x - (self.player.size.width / 2) > 0) {
+        self.player.position = CGPointMake(self.player.position.x - self.player.speed, self.player.position.y);
+    }
+    
+    if (self.rightControlPressed && self.player.position.x + (self.player.size.width / 2) < self.size.width) {
+        self.player.position = CGPointMake(self.player.position.x + self.player.speed, self.player.position.y);
+    }
     
 }
 

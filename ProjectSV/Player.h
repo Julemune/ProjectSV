@@ -8,6 +8,16 @@
 
 #import <SpriteKit/SpriteKit.h>
 
+typedef enum {
+    playerShip1,
+    playerShip2,
+    playerShip3
+} PlayerType;
+
 @interface Player : SKSpriteNode
+
+@property (assign, nonatomic) NSInteger health;
+
++ (Player *)playerWithPlayerType:(PlayerType)type;
 
 @end
