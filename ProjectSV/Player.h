@@ -16,7 +16,10 @@ typedef enum {
 
 @interface Player : SKSpriteNode
 
+@property (assign, nonatomic) PlayerType playerType;
+
 @property (assign, nonatomic) NSInteger health;
+@property (assign, nonatomic) NSInteger maxHealth;
 
 + (Player *)playerWithPlayerType:(PlayerType)type;
 

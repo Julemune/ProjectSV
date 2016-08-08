@@ -1,4 +1,5 @@
 #import "GameScene.h"
+#import "MenuScene.h"
 
 #import "SceneManager.h"
 
@@ -13,11 +14,14 @@
 #define SHOT_SHADED_CONTROL     @"shotShadedControl"
 #define SHIELD_SHADED_CONTROL   @"shieldShadedControl"
 
-#define PLAYER @"player";
+#define GO_BACK_BUTTON @"goBackButton"
+
+#define PLAYER @"player"
 
 @interface GameScene()
 
 @property (assign, nonatomic) BOOL contentCreated;
+@property (assign, nonatomic) BOOL gameOver;
 @property (assign, nonatomic) NSInteger starCounter;
 
 @property (assign, nonatomic) BOOL leftControlPressed;
@@ -26,6 +30,7 @@
 @property (assign, nonatomic) BOOL shieldControlPressed;
 
 @property (strong, nonatomic) Player *player;
+@property (assign, nonatomic) NSInteger lastPlayerHealth;
 
 @end
 
@@ -57,10 +62,16 @@
         if (CGRectContainsPoint([self childNodeWithName:SHOT_SHADED_CONTROL].frame, location)) {
             [[self childNodeWithName:SHOT_SHADED_CONTROL] childNodeWithName:SHOT_FLAT_CONTROL].hidden = NO;
             self.shotControlPressed = YES;
+            self.player.health++;
         }
         if (CGRectContainsPoint([self childNodeWithName:SHIELD_SHADED_CONTROL].frame, location)) {
             [[self childNodeWithName:SHIELD_SHADED_CONTROL] childNodeWithName:SHIELD_FLAT_CONTROL].hidden = NO;
             self.shieldControlPressed = YES;
+            self.player.health--;
+        }
+        
+        if (self.gameOver) {
+            [self presentMenuScene];
         }
         
     }
@@ -100,10 +111,11 @@
     }
     
     [self controlsActions];
+    [self checkPlayerHealth];
     
 }
 
-#pragma mark - Methods
+#pragma mark - SetUp Methods
 
 - (void)createSceneContents {
     
@@ -113,6 +125,7 @@
     
     [self createControls];
     
+    //Player
     self.player = [Player playerWithPlayerType:[SceneManager sharedSceneManager].playerType];
     self.player.position = CGPointMake(CGRectGetMidX(self.frame), self.size.height/5);
     self.player.zPosition = 5;
@@ -120,6 +133,28 @@
     
     self.player.name = PLAYER;
     [self addChild:self.player];
+    
+    self.lastPlayerHealth = self.player.health;
+    
+    //Health bar
+    for (int i = 1; i <= self.player.maxHealth; i++) {
+        NSString *textureName;
+        if (self.player.playerType == playerShip1) {
+            textureName = @"playerLife1";
+        } else if (self.player.playerType == playerShip2) {
+            textureName = @"playerLife2";
+        } else if (self.player.playerType == playerShip3) {
+            textureName = @"playerLife3";
+        }
+        SKTexture *texture = [SKTexture textureWithImageNamed:textureName];
+        SKSpriteNode *health = [SKSpriteNode spriteNodeWithTexture:texture];
+        [health setScale:0.8];
+        health.position = CGPointMake(self.size.width - health.size.width*i, self.size.height - health.size.height);
+        health.zPosition = 10;
+        health.name = [NSString stringWithFormat:@"healthLow%d", i];
+        [self addChild:health];
+        
+    }
     
 }
 
@@ -168,12 +203,79 @@
 
 - (void)controlsActions {
     
-    if (self.leftControlPressed && self.player.position.x - (self.player.size.width / 2) > 0) {
-        self.player.position = CGPointMake(self.player.position.x - self.player.speed, self.player.position.y);
+    if (!self.gameOver) {
+        
+        if (self.leftControlPressed && self.player.position.x - (self.player.size.width / 2) > 0) {
+            self.player.position = CGPointMake(self.player.position.x - self.player.speed, self.player.position.y);
+        }
+        
+        if (self.rightControlPressed && self.player.position.x + (self.player.size.width / 2) < self.size.width) {
+            self.player.position = CGPointMake(self.player.position.x + self.player.speed, self.player.position.y);
+        }
+        
     }
     
-    if (self.rightControlPressed && self.player.position.x + (self.player.size.width / 2) < self.size.width) {
-        self.player.position = CGPointMake(self.player.position.x + self.player.speed, self.player.position.y);
+}
+
+- (void)gameOverScreen {
+    
+    if (!self.gameOver) {
+        
+        SKLabelNode *gameOverLabel = [SKLabelNode labelNodeWithText:@"GAME OVER"];
+        gameOverLabel.position = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame)+30);
+        gameOverLabel.zPosition = 12;
+        gameOverLabel.fontName = @"KenVector Future";
+        gameOverLabel.fontSize = 40;
+        gameOverLabel.fontColor = [SKColor whiteColor];
+        gameOverLabel.alpha = 0;
+        [gameOverLabel runAction:[SKAction fadeInWithDuration:1]];
+        [self addChild:gameOverLabel];
+        
+        SKLabelNode *goBackLabel = [SKLabelNode labelNodeWithText:@"Tap to go to menu"];
+        goBackLabel.position = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame)-30);
+        goBackLabel.zPosition = 12;
+        goBackLabel.fontName = @"KenVector Future";
+        goBackLabel.fontSize = 25;
+        goBackLabel.fontColor = [SKColor whiteColor];
+        goBackLabel.alpha = 0;
+        [goBackLabel runAction:[SKAction fadeInWithDuration:1]];
+        [self addChild:goBackLabel];
+        
+        SKShapeNode *blackScreen = [SKShapeNode shapeNodeWithRect:self.frame];
+        blackScreen.fillColor = [SKColor blackColor];
+        blackScreen.position = CGPointMake(0, 0);
+        blackScreen.zPosition = 11;
+        blackScreen.alpha = 0;
+        [blackScreen runAction:[SKAction fadeInWithDuration:1]];
+        [self addChild:blackScreen];
+        
+        self.gameOver = YES;
+    }
+    
+}
+
+- (void)presentMenuScene {
+    
+    SKScene *menuScene = [[MenuScene alloc] initWithSize:self.size];
+    SKTransition *doorsTransition = [SKTransition doorsOpenVerticalWithDuration:0.5];
+    [self.view presentScene:menuScene transition:doorsTransition];
+    
+}
+
+#pragma mark - Game Methods
+
+- (void)checkPlayerHealth {
+    
+    if (self.lastPlayerHealth >= self.player.health) {
+        [self childNodeWithName:[NSString stringWithFormat:@"healthLow%ld", (long)self.lastPlayerHealth]].alpha = 0.5;
+        self.lastPlayerHealth = self.player.health;
+    }
+    if (self.lastPlayerHealth <= self.player.health) {
+        [self childNodeWithName:[NSString stringWithFormat:@"healthLow%ld", (long)self.lastPlayerHealth]].alpha = 1;
+        self.lastPlayerHealth = self.player.health;
+    }
+    if (self.player.health == 0) {
+        [self gameOverScreen];
     }
     
 }

@@ -8,6 +8,10 @@
 
 #import "Player.h"
 
+@interface Player ()
+
+@end
+
 @implementation Player
 
 + (Player *)playerWithPlayerType:(PlayerType)type{
@@ -30,23 +34,42 @@
     }
     
     Player *player = [super spriteNodeWithImageNamed:name];
+    player.playerType = type;
     
     switch (type) {
         case playerShip1:
             player.speed = 5;
+            player.maxHealth = 4;
             break;
         case playerShip2:
             player.speed = 8;
+            player.maxHealth = 3;
             break;
         case playerShip3:
             player.speed = 11;
+            player.maxHealth = 2;
             break;
         default:
             player.speed = 8;
+            player.maxHealth = 3;
             break;
     }
     
+    player.health = player.maxHealth;
+    
     return player;
+}
+
+- (void)setHealth:(NSInteger)health {
+    if (health <= self.maxHealth && health >= 0) {
+        _health = health;
+    }
+    if (health == 0) {
+        NSMutableArray *flashArray = [NSMutableArray new];
+        for (int i = 1; i < 7; i++)
+            [flashArray addObject:[SKTexture textureWithImageNamed:[NSString stringWithFormat:@"explosion%d", i]]];
+        [self runAction:[SKAction animateWithTextures:flashArray timePerFrame:0.5]];
+    }
 }
 
 @end

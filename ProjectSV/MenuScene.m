@@ -12,8 +12,6 @@
 @property (assign, nonatomic) BOOL contentCreated;
 @property (assign, nonatomic) NSInteger starCounter;
 
-@property (strong, nonatomic) GameScene *gameScene;
-
 @end
 
 @implementation MenuScene
@@ -154,9 +152,9 @@
 
 - (void)presentGameScene {
     
-    self.gameScene = [[GameScene alloc] initWithSize:self.size];
+    SKScene *gameScene = [[GameScene alloc] initWithSize:self.size];
     SKTransition *doorsTransition = [SKTransition doorsOpenVerticalWithDuration:0.5];
-    [self.view presentScene:self.gameScene transition:doorsTransition];
+    [self.view presentScene:gameScene transition:doorsTransition];
     
 }
 
