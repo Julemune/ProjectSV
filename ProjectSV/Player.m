@@ -1,11 +1,3 @@
-//
-//  Player.m
-//  ProjectSV
-//
-//  Created by Julemune on 05.08.16.
-//  Copyright © 2016 Julemune. All rights reserved.
-//
-
 #import "Player.h"
 
 @interface Player ()
@@ -64,7 +56,7 @@
     if (health <= self.maxHealth && health >= 0) {
         _health = health;
     }
-    if (health == 0) {
+    if (health <= 0) {
         NSMutableArray *flashArray = [NSMutableArray new];
         for (int i = 1; i < 7; i++)
             [flashArray addObject:[SKTexture textureWithImageNamed:[NSString stringWithFormat:@"explosion%d", i]]];

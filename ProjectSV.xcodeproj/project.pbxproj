@@ -21,6 +21,7 @@
 		2E278CD41D54AB0100D5B59C /* kenvector_future.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2E278CD21D54A98D00D5B59C /* kenvector_future.ttf */; };
 		2E278CD71D54AD0500D5B59C /* Player.m in Sources */ = {isa = PBXBuildFile; fileRef = 2E278CD61D54AD0500D5B59C /* Player.m */; };
 		2E278CE61D54CCE800D5B59C /* SceneManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 2E278CE51D54CCE800D5B59C /* SceneManager.m */; };
+		2E29D28F1D59CB2600A0870F /* GameOverScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 2E29D28E1D59CB2600A0870F /* GameOverScene.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,6 +68,8 @@
 		2E278CD61D54AD0500D5B59C /* Player.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Player.m; sourceTree = "<group>"; };
 		2E278CE41D54CCE800D5B59C /* SceneManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SceneManager.h; sourceTree = "<group>"; };
 		2E278CE51D54CCE800D5B59C /* SceneManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SceneManager.m; sourceTree = "<group>"; };
+		2E29D28D1D59CB2600A0870F /* GameOverScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GameOverScene.h; sourceTree = "<group>"; };
+		2E29D28E1D59CB2600A0870F /* GameOverScene.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GameOverScene.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -177,6 +180,8 @@
 				2E278CC71D549EE800D5B59C /* MenuScene.m */,
 				2E278CC91D54A48700D5B59C /* GameScene.h */,
 				2E278CCA1D54A48700D5B59C /* GameScene.m */,
+				2E29D28D1D59CB2600A0870F /* GameOverScene.h */,
+				2E29D28E1D59CB2600A0870F /* GameOverScene.m */,
 			);
 			name = Scenes;
 			sourceTree = "<group>";
@@ -328,6 +333,7 @@
 				2E278C911D549DE300D5B59C /* AppDelegate.m in Sources */,
 				2E278CD71D54AD0500D5B59C /* Player.m in Sources */,
 				2E278CE61D54CCE800D5B59C /* SceneManager.m in Sources */,
+				2E29D28F1D59CB2600A0870F /* GameOverScene.m in Sources */,
 				2E278C8E1D549DE300D5B59C /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

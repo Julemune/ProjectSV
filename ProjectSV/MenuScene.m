@@ -3,9 +3,13 @@
 
 #import "SceneManager.h"
 
-#define PLAYER_SHIP_1 @"playerShip1";
-#define PLAYER_SHIP_2 @"playerShip2";
-#define PLAYER_SHIP_3 @"playerShip3";
+#define PLAYER_SHIP_1   @"playerShip1"
+#define PLAYER_SHIP_2   @"playerShip2"
+#define PLAYER_SHIP_3   @"playerShip3"
+#define MARK            @"mark"
+
+#define START_GAME_BUTTON   @"startGame"
+#define PLAY_BUTTON         @"play"
 
 @interface MenuScene()
 
@@ -31,23 +35,25 @@
         
         CGPoint location = [touch locationInNode:self];
         
-        if (CGRectContainsPoint([self childNodeWithName:@"StartGame"].frame, location)) {
-            [[self childNodeWithName:@"StartGame"] removeFromParent];
-            [self playerSelectScreen];
+        if (CGRectContainsPoint([self childNodeWithName:START_GAME_BUTTON].frame, location)) {
+            [[self childNodeWithName:START_GAME_BUTTON] runAction:[SKAction fadeOutWithDuration:0.5] completion:^{
+                [[self childNodeWithName:START_GAME_BUTTON] removeFromParent];
+                [self presentPlayerSelectScreen];
+            }];
         }
-        if (CGRectContainsPoint([self childNodeWithName:@"Play"].frame, location)) {
+        if (CGRectContainsPoint([self childNodeWithName:PLAY_BUTTON].frame, location)) {
             [self presentGameScene];
         }
-        if (CGRectContainsPoint([self childNodeWithName:@"playerShip1"].frame, location)) {
-            [self childNodeWithName:@"mark"].position = CGPointMake([self childNodeWithName:@"playerShip1"].position.x, [self childNodeWithName:@"mark"].position.y);
+        if (CGRectContainsPoint([self childNodeWithName:PLAYER_SHIP_1].frame, location)) {
+            [self childNodeWithName:MARK].position = CGPointMake([self childNodeWithName:PLAYER_SHIP_1].position.x, [self childNodeWithName:MARK].position.y);
             [SceneManager sharedSceneManager].playerType = playerShip1;
         }
-        if (CGRectContainsPoint([self childNodeWithName:@"playerShip2"].frame, location)) {
-            [self childNodeWithName:@"mark"].position = CGPointMake([self childNodeWithName:@"playerShip2"].position.x, [self childNodeWithName:@"mark"].position.y);
+        if (CGRectContainsPoint([self childNodeWithName:PLAYER_SHIP_2].frame, location)) {
+            [self childNodeWithName:MARK].position = CGPointMake([self childNodeWithName:PLAYER_SHIP_2].position.x, [self childNodeWithName:MARK].position.y);
             [SceneManager sharedSceneManager].playerType = playerShip2;
         }
-        if (CGRectContainsPoint([self childNodeWithName:@"playerShip3"].frame, location)) {
-            [self childNodeWithName:@"mark"].position = CGPointMake([self childNodeWithName:@"playerShip3"].position.x, [self childNodeWithName:@"mark"].position.y);
+        if (CGRectContainsPoint([self childNodeWithName:PLAYER_SHIP_3].frame, location)) {
+            [self childNodeWithName:MARK].position = CGPointMake([self childNodeWithName:PLAYER_SHIP_3].position.x, [self childNodeWithName:MARK].position.y);
             [SceneManager sharedSceneManager].playerType = playerShip3;
         }
         
@@ -66,7 +72,6 @@
         self.starCounter ++;
     }
     
-    
 }
 
 #pragma mark - Methods
@@ -75,7 +80,7 @@
     
     self.starCounter = 0;
     [[SceneManager sharedSceneManager] generateBasicStars:self];
-    [[SceneManager sharedSceneManager] createBackgroundWithScene:self imageNamed:@"blue"];
+    [[SceneManager sharedSceneManager] createBackgroundWithScene:self imageNamed:BACKGROUND_BLUE];
     
     [self createMenuItems];
     [SceneManager sharedSceneManager].playerType = playerShip2;
@@ -88,73 +93,76 @@
     
     startGameLabel.position = CGPointMake(CGRectGetMidX(self.frame),CGRectGetMidY(self.frame));
     startGameLabel.zPosition = 5;
-    startGameLabel.fontName = @"KenVector Future";
+    startGameLabel.fontName = FONT_FUTURE;
     startGameLabel.fontSize = 30;
     startGameLabel.fontColor = [SKColor whiteColor];
-    startGameLabel.name = @"StartGame";
+    startGameLabel.name = START_GAME_BUTTON;
     
     [self addChild:startGameLabel];
     
 }
 
-- (void)playerSelectScreen {
+- (void)presentPlayerSelectScreen {
     
     float gridX = self.size.width / 4;
     float gridY = self.size.height / 4;
     
-    SKTexture *texture1 = [SKTexture textureWithImageNamed:@"playerShip1"];
-    SKSpriteNode *playerShip1 = [SKSpriteNode spriteNodeWithTexture:texture1];
-    playerShip1.position = CGPointMake(gridX, gridY*3-(gridY/4));
-    playerShip1.zPosition = 5;
-    [playerShip1 setScale:0.8];
-    playerShip1.name = PLAYER_SHIP_1;
+    SKSpriteNode *playerShip1 = [self playerShipWithName:PLAYER_SHIP_1 position:CGPointMake(gridX, gridY*3-(gridY/4))];
     [self addChild:playerShip1];
     
-    SKTexture *texture2 = [SKTexture textureWithImageNamed:@"playerShip2"];
-    SKSpriteNode *playerShip2 = [SKSpriteNode spriteNodeWithTexture:texture2];
-    playerShip2.position = CGPointMake(gridX*2, gridY*3-(gridY/4));
-    playerShip2.zPosition = 5;
-    [playerShip2 setScale:0.8];
-    playerShip2.name = PLAYER_SHIP_2;
+    SKSpriteNode *playerShip2 = [self playerShipWithName:PLAYER_SHIP_2 position:CGPointMake(gridX*2, gridY*3-(gridY/4))];
     [self addChild:playerShip2];
     
-    SKTexture *texture3 = [SKTexture textureWithImageNamed:@"playerShip3"];
-    SKSpriteNode *playerShip3 = [SKSpriteNode spriteNodeWithTexture:texture3];
-    playerShip3.position = CGPointMake(gridX*3, gridY*3-(gridY/4));
-    playerShip3.zPosition = 5;
-    [playerShip3 setScale:0.8];
-    playerShip3.name = PLAYER_SHIP_3;
+    SKSpriteNode *playerShip3 = [self playerShipWithName:PLAYER_SHIP_3 position:CGPointMake(gridX*3, gridY*3-(gridY/4))];
     [self addChild:playerShip3];
     
-    SKSpriteNode *mark = [SKSpriteNode spriteNodeWithImageNamed:@"mark"];
+    SKSpriteNode *mark = [SKSpriteNode spriteNodeWithImageNamed:MARK];
     mark.position = CGPointMake(playerShip2.position.x, gridY*2);
     mark.zPosition = 5;
-    mark.name = @"mark";
+    mark.name = MARK;
+    mark.alpha = 0;
     [mark setScale:0.4];
-    SKAction *scl1 = [SKAction scaleBy:0.8 duration:0.5];
-    SKAction *scl2 = [SKAction scaleBy:1.25 duration:0.5];
-    SKAction *sequence = [SKAction sequence:@[scl1, scl2]];
-    SKAction *repeat = [SKAction repeatActionForever:sequence];
-    [mark runAction:repeat];
+    SKAction *scaleMin  = [SKAction scaleBy:0.8 duration:0.5];
+    SKAction *scaleMax  = [SKAction scaleBy:1.25 duration:0.5];
+    SKAction *sequence  = [SKAction sequence:@[scaleMin, scaleMax]];
+    SKAction *repeat    = [SKAction repeatActionForever:sequence];
+    SKAction *fadeIn    = [SKAction fadeInWithDuration:1];
+    SKAction *group     = [SKAction group:@[repeat, fadeIn]];
+    [mark runAction:group];
     [self addChild:mark];
     
     SKLabelNode *startGameLabel = [SKLabelNode labelNodeWithText:@"Play"];
-    
     startGameLabel.position = CGPointMake(gridX*2,gridY);
     startGameLabel.zPosition = 5;
-    startGameLabel.fontName = @"KenVector Future";
+    startGameLabel.fontName = FONT_FUTURE;
     startGameLabel.fontSize = 30;
     startGameLabel.fontColor = [SKColor whiteColor];
-    startGameLabel.name = @"Play";
+    startGameLabel.alpha = 0;
+    startGameLabel.name = PLAY_BUTTON;
+    [startGameLabel runAction:[SKAction fadeInWithDuration:1]];
     [self addChild:startGameLabel];
+    
+}
+
+- (SKSpriteNode *)playerShipWithName:(NSString *)name position:(CGPoint)position {
+    
+    SKTexture *texture = [SKTexture textureWithImageNamed:name];
+    SKSpriteNode *playerShip = [SKSpriteNode spriteNodeWithTexture:texture];
+    playerShip.position = position;
+    playerShip.zPosition = 5;
+    [playerShip setScale:0.8];
+    playerShip.name = name;
+    playerShip.alpha = 0;
+    [playerShip runAction:[SKAction fadeInWithDuration:1]];
+    return playerShip;
     
 }
 
 - (void)presentGameScene {
     
     SKScene *gameScene = [[GameScene alloc] initWithSize:self.size];
-    SKTransition *doorsTransition = [SKTransition doorsOpenVerticalWithDuration:0.5];
-    [self.view presentScene:gameScene transition:doorsTransition];
+    SKTransition *fadeTransition = [SKTransition fadeWithDuration:1];
+    [self.view presentScene:gameScene transition:fadeTransition];
     
 }
 

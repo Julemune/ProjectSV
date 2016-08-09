@@ -1,5 +1,5 @@
 #import "GameScene.h"
-#import "MenuScene.h"
+#import "GameOverScene.h"
 
 #import "SceneManager.h"
 
@@ -14,15 +14,16 @@
 #define SHOT_SHADED_CONTROL     @"shotShadedControl"
 #define SHIELD_SHADED_CONTROL   @"shieldShadedControl"
 
-#define GO_BACK_BUTTON @"goBackButton"
-
 #define PLAYER @"player"
 
-@interface GameScene()
+static const uint32_t playerCategory       =  0x1 << 0;
+static const uint32_t meteorCategory        =  0x1 << 1;
+//static const uint32_t meteorCategory        =  0x1 << 2;
+
+@interface GameScene() <SKPhysicsContactDelegate>
 
 @property (assign, nonatomic) BOOL contentCreated;
 @property (assign, nonatomic) BOOL gameOver;
-@property (assign, nonatomic) NSInteger starCounter;
 
 @property (assign, nonatomic) BOOL leftControlPressed;
 @property (assign, nonatomic) BOOL rightControlPressed;
@@ -31,6 +32,11 @@
 
 @property (strong, nonatomic) Player *player;
 @property (assign, nonatomic) NSInteger lastPlayerHealth;
+
+@property (assign, nonatomic) NSInteger starCounter;
+
+@property (assign, nonatomic) NSInteger meteorCounter;
+@property (assign, nonatomic) NSInteger meteorCounterMaxValue;
 
 @end
 
@@ -61,17 +67,12 @@
         }
         if (CGRectContainsPoint([self childNodeWithName:SHOT_SHADED_CONTROL].frame, location)) {
             [[self childNodeWithName:SHOT_SHADED_CONTROL] childNodeWithName:SHOT_FLAT_CONTROL].hidden = NO;
+            [self playerShot];
             self.shotControlPressed = YES;
-            self.player.health++;
         }
         if (CGRectContainsPoint([self childNodeWithName:SHIELD_SHADED_CONTROL].frame, location)) {
             [[self childNodeWithName:SHIELD_SHADED_CONTROL] childNodeWithName:SHIELD_FLAT_CONTROL].hidden = NO;
             self.shieldControlPressed = YES;
-            self.player.health--;
-        }
-        
-        if (self.gameOver) {
-            [self presentMenuScene];
         }
         
     }
@@ -110,18 +111,52 @@
         self.starCounter ++;
     }
     
+    [self generateMeteor];
+    
     [self controlsActions];
     [self checkPlayerHealth];
     
+}
+
+#pragma mark - SKPhysicsContactDelegate
+
+- (void)didBeginContact:(SKPhysicsContact *)contact {
+
+    if (contact.bodyA.categoryBitMask == playerCategory && contact.bodyB.categoryBitMask == meteorCategory) {
+
+        SKNode *meteor = contact.bodyB.node;
+        meteor.physicsBody = nil;
+        
+        NSMutableArray *flashArray = [NSMutableArray new];
+        for (int i = 1; i < 7; i++)
+            [flashArray addObject:[SKTexture textureWithImageNamed:[NSString stringWithFormat:@"explosion%d", i]]];
+        [meteor runAction:[SKAction animateWithTextures:flashArray timePerFrame:0.1] completion:^{
+            [meteor removeFromParent];
+        }];
+        self.player.health--;
+    }
+    
+    if (contact.bodyA.categoryBitMask == meteorCategory && contact.bodyB.categoryBitMask == meteorCategory) {
+        [contact.bodyA.node removeActionForKey:@"moveXAction"];
+        [contact.bodyB.node removeActionForKey:@"moveXAction"];
+    }
+
+
 }
 
 #pragma mark - SetUp Methods
 
 - (void)createSceneContents {
     
+    self.physicsWorld.gravity = CGVectorMake(0,0);
+    self.physicsWorld.contactDelegate = self;
+    
     self.starCounter = 0;
+    self.meteorCounter = 400;
+    self.meteorCounterMaxValue = 400;
+    
     [[SceneManager sharedSceneManager] generateBasicStars:self];
-    [[SceneManager sharedSceneManager] createBackgroundWithScene:self imageNamed:@"purple"];
+    [[SceneManager sharedSceneManager] createBackgroundWithScene:self imageNamed:BACKGROUND_PURPLE];
     
     [self createControls];
     
@@ -130,8 +165,14 @@
     self.player.position = CGPointMake(CGRectGetMidX(self.frame), self.size.height/5);
     self.player.zPosition = 5;
     [self.player setScale:0.8];
-    
     self.player.name = PLAYER;
+    
+    self.player.physicsBody = [SKPhysicsBody bodyWithRectangleOfSize:self.player.size];
+    self.player.physicsBody.dynamic = NO;
+    self.player.physicsBody.categoryBitMask = playerCategory;
+    self.player.physicsBody.collisionBitMask = meteorCategory;
+    self.player.physicsBody.contactTestBitMask = meteorCategory;
+    
     [self addChild:self.player];
     
     self.lastPlayerHealth = self.player.health;
@@ -151,7 +192,7 @@
         [health setScale:0.8];
         health.position = CGPointMake(self.size.width - health.size.width*i, self.size.height - health.size.height);
         health.zPosition = 10;
-        health.name = [NSString stringWithFormat:@"healthLow%d", i];
+        health.name = [NSString stringWithFormat:@"health%d", i];
         [self addChild:health];
         
     }
@@ -217,48 +258,16 @@
     
 }
 
-- (void)gameOverScreen {
+- (void)presentGameOver {
     
     if (!self.gameOver) {
-        
-        SKLabelNode *gameOverLabel = [SKLabelNode labelNodeWithText:@"GAME OVER"];
-        gameOverLabel.position = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame)+30);
-        gameOverLabel.zPosition = 12;
-        gameOverLabel.fontName = @"KenVector Future";
-        gameOverLabel.fontSize = 40;
-        gameOverLabel.fontColor = [SKColor whiteColor];
-        gameOverLabel.alpha = 0;
-        [gameOverLabel runAction:[SKAction fadeInWithDuration:1]];
-        [self addChild:gameOverLabel];
-        
-        SKLabelNode *goBackLabel = [SKLabelNode labelNodeWithText:@"Tap to go to menu"];
-        goBackLabel.position = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame)-30);
-        goBackLabel.zPosition = 12;
-        goBackLabel.fontName = @"KenVector Future";
-        goBackLabel.fontSize = 25;
-        goBackLabel.fontColor = [SKColor whiteColor];
-        goBackLabel.alpha = 0;
-        [goBackLabel runAction:[SKAction fadeInWithDuration:1]];
-        [self addChild:goBackLabel];
-        
-        SKShapeNode *blackScreen = [SKShapeNode shapeNodeWithRect:self.frame];
-        blackScreen.fillColor = [SKColor blackColor];
-        blackScreen.position = CGPointMake(0, 0);
-        blackScreen.zPosition = 11;
-        blackScreen.alpha = 0;
-        [blackScreen runAction:[SKAction fadeInWithDuration:1]];
-        [self addChild:blackScreen];
-        
         self.gameOver = YES;
+            [self runAction:[SKAction waitForDuration:0.4] completion:^{
+                SKScene *gameOverScene = [[GameOverScene alloc] initWithSize:self.size];
+                SKTransition *fadeTransition = [SKTransition fadeWithDuration:1];
+                [self.view presentScene:gameOverScene transition:fadeTransition];
+            }];
     }
-    
-}
-
-- (void)presentMenuScene {
-    
-    SKScene *menuScene = [[MenuScene alloc] initWithSize:self.size];
-    SKTransition *doorsTransition = [SKTransition doorsOpenVerticalWithDuration:0.5];
-    [self.view presentScene:menuScene transition:doorsTransition];
     
 }
 
@@ -267,15 +276,67 @@
 - (void)checkPlayerHealth {
     
     if (self.lastPlayerHealth >= self.player.health) {
-        [self childNodeWithName:[NSString stringWithFormat:@"healthLow%ld", (long)self.lastPlayerHealth]].alpha = 0.5;
+        [self childNodeWithName:[NSString stringWithFormat:@"health%ld", (long)self.lastPlayerHealth]].alpha = 0.5;
         self.lastPlayerHealth = self.player.health;
     }
     if (self.lastPlayerHealth <= self.player.health) {
-        [self childNodeWithName:[NSString stringWithFormat:@"healthLow%ld", (long)self.lastPlayerHealth]].alpha = 1;
+        [self childNodeWithName:[NSString stringWithFormat:@"health%ld", (long)self.lastPlayerHealth]].alpha = 1;
         self.lastPlayerHealth = self.player.health;
     }
     if (self.player.health == 0) {
-        [self gameOverScreen];
+        [self presentGameOver];
+    }
+    
+}
+
+- (void)playerShot {
+    
+    
+    
+}
+
+#pragma mark - Enemy
+
+- (void)generateMeteor {
+    
+    NSInteger maxValue;
+
+    if (arc4random_uniform(2))
+        maxValue = self.meteorCounterMaxValue + arc4random_uniform((uint32_t)(self.meteorCounterMaxValue));
+    else
+        maxValue = self.meteorCounterMaxValue - arc4random_uniform((uint32_t)(self.meteorCounterMaxValue));
+    
+    if (self.meteorCounter > maxValue) {
+        SKSpriteNode *meteor = [SKSpriteNode spriteNodeWithImageNamed:[NSString stringWithFormat:@"meteor%d", arc4random_uniform(12)+1]];
+        meteor.position = CGPointMake((arc4random() % (uint32_t)self.size.width), self.size.height + meteor.size.height);
+        meteor.zPosition = 5;
+        meteor.zRotation = (M_PI_2 / 180) * arc4random_uniform(361);
+        [meteor setScale:0.8];
+        
+        meteor.physicsBody = [SKPhysicsBody bodyWithCircleOfRadius:meteor.size.width/2];
+        meteor.physicsBody.categoryBitMask = meteorCategory;
+        meteor.physicsBody.collisionBitMask = meteorCategory;
+        meteor.physicsBody.contactTestBitMask = meteorCategory;
+        
+        NSInteger moveDuration = arc4random_uniform(6)+6;
+        
+        SKAction *moveYAction = [SKAction moveToY:0 - meteor.size.width duration:moveDuration];
+        [meteor runAction:moveYAction];
+        
+        NSInteger moveX;
+            if (arc4random_uniform(2))
+                moveX = meteor.position.x + arc4random_uniform(meteor.size.width);
+            else
+                moveX = meteor.position.x - arc4random_uniform(meteor.size.width);
+        SKAction *moveXAction = [SKAction moveToX:moveX duration:moveDuration];
+        [meteor runAction:moveXAction withKey:@"moveXAction"];
+        
+        
+        [self addChild:meteor];
+        
+        self.meteorCounter = 0;
+    } else {
+        self.meteorCounter++;
     }
     
 }
