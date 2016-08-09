@@ -12,6 +12,7 @@ typedef enum {
 
 @property (assign, nonatomic) NSInteger health;
 @property (assign, nonatomic) NSInteger maxHealth;
+@property (assign, nonatomic) NSInteger laserDamage;
 
 + (Player *)playerWithPlayerType:(PlayerType)type;
 

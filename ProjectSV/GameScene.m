@@ -4,6 +4,7 @@
 #import "SceneManager.h"
 
 #import "Player.h"
+#import "Meteor.h"
 
 #define LEFT_FLAT_CONTROL       @"leftFlatControl"
 #define RIGHT_FLAT_CONTROL      @"rightFlatControl"
@@ -15,10 +16,11 @@
 #define SHIELD_SHADED_CONTROL   @"shieldShadedControl"
 
 #define PLAYER @"player"
+#define PLAYER_LASER @"playerLaser"
 
-static const uint32_t playerCategory       =  0x1 << 0;
-static const uint32_t meteorCategory        =  0x1 << 1;
-//static const uint32_t meteorCategory        =  0x1 << 2;
+static const uint32_t playerCategory            =  0x1 << 0;
+static const uint32_t playerLaserCategory       =  0x1 << 1;
+static const uint32_t meteorCategory            =  0x1 << 2;
 
 @interface GameScene() <SKPhysicsContactDelegate>
 
@@ -123,16 +125,8 @@ static const uint32_t meteorCategory        =  0x1 << 1;
 - (void)didBeginContact:(SKPhysicsContact *)contact {
 
     if (contact.bodyA.categoryBitMask == playerCategory && contact.bodyB.categoryBitMask == meteorCategory) {
-
-        SKNode *meteor = contact.bodyB.node;
-        meteor.physicsBody = nil;
-        
-        NSMutableArray *flashArray = [NSMutableArray new];
-        for (int i = 1; i < 7; i++)
-            [flashArray addObject:[SKTexture textureWithImageNamed:[NSString stringWithFormat:@"explosion%d", i]]];
-        [meteor runAction:[SKAction animateWithTextures:flashArray timePerFrame:0.1] completion:^{
-            [meteor removeFromParent];
-        }];
+        Meteor *meteor = (Meteor *)contact.bodyB.node;
+        [meteor explosionAndRemoveFromParrentOnPoint:contact.contactPoint];
         self.player.health--;
     }
     
@@ -140,7 +134,25 @@ static const uint32_t meteorCategory        =  0x1 << 1;
         [contact.bodyA.node removeActionForKey:@"moveXAction"];
         [contact.bodyB.node removeActionForKey:@"moveXAction"];
     }
-
+    
+    if (contact.bodyA.categoryBitMask == playerLaserCategory && contact.bodyB.categoryBitMask == meteorCategory) {
+        Meteor *meteor = (Meteor *)contact.bodyB.node;
+        meteor.health = meteor.health - self.player.laserDamage;
+        if (meteor.health <= 0) {
+            [meteor explosionAndRemoveFromParrentOnPoint:contact.contactPoint];
+        }
+        
+        [contact.bodyA.node removeFromParent];
+        
+        SKSpriteNode *expl = [SKSpriteNode spriteNodeWithImageNamed:@"laserBlue08"];
+        expl.position = contact.contactPoint;
+        expl.zPosition = 6;
+        [expl setScale:0.8];
+        [expl runAction:[SKAction waitForDuration:0.1] completion:^{
+            [expl removeFromParent];
+        }];
+        [self addChild:expl];
+    }
 
 }
 
@@ -291,7 +303,24 @@ static const uint32_t meteorCategory        =  0x1 << 1;
 
 - (void)playerShot {
     
-    
+    if (![self childNodeWithName:PLAYER_LASER]) {
+        SKSpriteNode *playerLaser = [SKSpriteNode spriteNodeWithImageNamed:@"laserBlue04"];
+        playerLaser.anchorPoint = CGPointMake(0.5, 0);
+        playerLaser.position = CGPointMake(self.player.position.x, self.player.position.y+self.player.size.height/2);
+        playerLaser.zPosition = 5;
+        [playerLaser setScale:0.8];
+        playerLaser.name = PLAYER_LASER;
+        
+        playerLaser.physicsBody = [SKPhysicsBody bodyWithRectangleOfSize:playerLaser.size];
+        playerLaser.physicsBody.categoryBitMask = playerLaserCategory;
+        playerLaser.physicsBody.collisionBitMask = meteorCategory;
+        playerLaser.physicsBody.contactTestBitMask = meteorCategory;
+        
+        [playerLaser runAction:[SKAction moveToY:self.size.height duration:1] completion:^{
+            [playerLaser removeFromParent];
+        }];
+        [self addChild:playerLaser];
+    }
     
 }
 
@@ -307,7 +336,8 @@ static const uint32_t meteorCategory        =  0x1 << 1;
         maxValue = self.meteorCounterMaxValue - arc4random_uniform((uint32_t)(self.meteorCounterMaxValue));
     
     if (self.meteorCounter > maxValue) {
-        SKSpriteNode *meteor = [SKSpriteNode spriteNodeWithImageNamed:[NSString stringWithFormat:@"meteor%d", arc4random_uniform(12)+1]];
+        NSInteger meteorIndex = arc4random_uniform(12)+1;
+        Meteor *meteor = [Meteor spriteNodeWithImageNamed:[NSString stringWithFormat:@"meteor%ld", (long)meteorIndex] type:meteorIndex > 6 ? meteorGreyType : meteorBrownType];
         meteor.position = CGPointMake((arc4random() % (uint32_t)self.size.width), self.size.height + meteor.size.height);
         meteor.zPosition = 5;
         meteor.zRotation = (M_PI_2 / 180) * arc4random_uniform(361);
@@ -331,6 +361,11 @@ static const uint32_t meteorCategory        =  0x1 << 1;
         SKAction *moveXAction = [SKAction moveToX:moveX duration:moveDuration];
         [meteor runAction:moveXAction withKey:@"moveXAction"];
         
+        if (meteorIndex == 5 || meteorIndex == 6 || meteorIndex == 11 || meteorIndex == 12) {
+            meteor.health = 1;
+        } else {
+            meteor.health = 3;
+        }
         
         [self addChild:meteor];
         

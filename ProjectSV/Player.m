@@ -48,6 +48,7 @@
     }
     
     player.health = player.maxHealth;
+    player.laserDamage = 1;
     
     return player;
 }
