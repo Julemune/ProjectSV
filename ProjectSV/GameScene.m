@@ -8,12 +8,10 @@
 
 #define LEFT_FLAT_CONTROL       @"leftFlatControl"
 #define RIGHT_FLAT_CONTROL      @"rightFlatControl"
-#define SHOT_FLAT_CONTROL       @"shotFlatControl"
-#define SHIELD_FLAT_CONTROL     @"shieldFlatControl"
 #define LEFT_SHADED_CONTROL     @"leftShadedControl"
 #define RIGHT_SHADED_CONTROL    @"rightShadedControl"
-#define SHOT_SHADED_CONTROL     @"shotShadedControl"
-#define SHIELD_SHADED_CONTROL   @"shieldShadedControl"
+
+#define SCORE @"score"
 
 #define PLAYER @"player"
 #define PLAYER_LASER @"playerLaser"
@@ -29,16 +27,20 @@ static const uint32_t meteorCategory            =  0x1 << 2;
 
 @property (assign, nonatomic) BOOL leftControlPressed;
 @property (assign, nonatomic) BOOL rightControlPressed;
-@property (assign, nonatomic) BOOL shotControlPressed;
-@property (assign, nonatomic) BOOL shieldControlPressed;
+
+@property (assign, nonatomic) NSInteger gameScore;
+@property (assign, nonatomic) float complexityDelta;
 
 @property (strong, nonatomic) Player *player;
 @property (assign, nonatomic) NSInteger lastPlayerHealth;
+@property (assign, nonatomic) NSInteger laserCounter;
 
 @property (assign, nonatomic) NSInteger starCounter;
 
 @property (assign, nonatomic) NSInteger meteorCounter;
 @property (assign, nonatomic) NSInteger meteorCounterMaxValue;
+
+
 
 @end
 
@@ -55,6 +57,9 @@ static const uint32_t meteorCategory            =  0x1 << 2;
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(nullable UIEvent *)event {
     
+    self.rightControlPressed = NO;
+    self.leftControlPressed = NO;
+    
     for (UITouch *touch in touches) {
         
         CGPoint location = [touch locationInNode:self];
@@ -67,15 +72,6 @@ static const uint32_t meteorCategory            =  0x1 << 2;
             [[self childNodeWithName:RIGHT_SHADED_CONTROL] childNodeWithName:RIGHT_FLAT_CONTROL].hidden = NO;
             self.rightControlPressed = YES;
         }
-        if (CGRectContainsPoint([self childNodeWithName:SHOT_SHADED_CONTROL].frame, location)) {
-            [[self childNodeWithName:SHOT_SHADED_CONTROL] childNodeWithName:SHOT_FLAT_CONTROL].hidden = NO;
-            [self playerShot];
-            self.shotControlPressed = YES;
-        }
-        if (CGRectContainsPoint([self childNodeWithName:SHIELD_SHADED_CONTROL].frame, location)) {
-            [[self childNodeWithName:SHIELD_SHADED_CONTROL] childNodeWithName:SHIELD_FLAT_CONTROL].hidden = NO;
-            self.shieldControlPressed = YES;
-        }
         
     }
     
@@ -83,21 +79,19 @@ static const uint32_t meteorCategory            =  0x1 << 2;
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(nullable UIEvent *)event {
     
-    if (self.leftControlPressed) {
-        [[self childNodeWithName:LEFT_SHADED_CONTROL] childNodeWithName:LEFT_FLAT_CONTROL].hidden = YES;
-        self.leftControlPressed = NO;
-    }
-    if (self.rightControlPressed) {
-        [[self childNodeWithName:RIGHT_SHADED_CONTROL] childNodeWithName:RIGHT_FLAT_CONTROL].hidden = YES;
-        self.rightControlPressed = NO;
-    }
-    if (self.shotControlPressed) {
-        [[self childNodeWithName:SHOT_SHADED_CONTROL] childNodeWithName:SHOT_FLAT_CONTROL].hidden = YES;
-        self.shotControlPressed = NO;
-    }
-    if (self.shieldControlPressed) {
-        [[self childNodeWithName:SHIELD_SHADED_CONTROL] childNodeWithName:SHIELD_FLAT_CONTROL].hidden = YES;
-        self.shieldControlPressed = NO;
+    for (UITouch *touch in touches) {
+        
+        CGPoint location = [touch locationInNode:self];
+        
+        if (self.leftControlPressed && !CGRectContainsPoint([self childNodeWithName:RIGHT_SHADED_CONTROL].frame, location)) {
+            [[self childNodeWithName:LEFT_SHADED_CONTROL] childNodeWithName:LEFT_FLAT_CONTROL].hidden = YES;
+            self.leftControlPressed = NO;
+        }
+        if (self.rightControlPressed && !CGRectContainsPoint([self childNodeWithName:LEFT_SHADED_CONTROL].frame, location)) {
+            [[self childNodeWithName:RIGHT_SHADED_CONTROL] childNodeWithName:RIGHT_FLAT_CONTROL].hidden = YES;
+            self.rightControlPressed = NO;
+        }
+        
     }
     
 }
@@ -107,7 +101,7 @@ static const uint32_t meteorCategory            =  0x1 << 2;
     [[SceneManager sharedSceneManager] moveSceneWithScene:self];
     
     if (self.starCounter > 20) {
-        [self addChild:[[SceneManager sharedSceneManager] generateStarWithViewSize:self.size]];
+        [self addChild:[[SceneManager sharedSceneManager] generateStarWithViewSize:self.size speedDelta:self.complexityDelta]];
         self.starCounter = 0;
     } else {
         self.starCounter ++;
@@ -117,6 +111,8 @@ static const uint32_t meteorCategory            =  0x1 << 2;
     
     [self controlsActions];
     [self checkPlayerHealth];
+    
+    [self playerShot];
     
 }
 
@@ -139,12 +135,13 @@ static const uint32_t meteorCategory            =  0x1 << 2;
         Meteor *meteor = (Meteor *)contact.bodyB.node;
         meteor.health = meteor.health - self.player.laserDamage;
         if (meteor.health <= 0) {
+            [self countGameScore:meteor.scoreWeight];
             [meteor explosionAndRemoveFromParrentOnPoint:contact.contactPoint];
         }
         
         [contact.bodyA.node removeFromParent];
         
-        SKSpriteNode *expl = [SKSpriteNode spriteNodeWithImageNamed:@"laserBlue08"];
+        SKSpriteNode *expl = [SKSpriteNode spriteNodeWithImageNamed:@"laserRed08"];
         expl.position = contact.contactPoint;
         expl.zPosition = 6;
         [expl setScale:0.8];
@@ -160,12 +157,24 @@ static const uint32_t meteorCategory            =  0x1 << 2;
 
 - (void)createSceneContents {
     
+    self.gameScore = 0;
+    self.complexityDelta = 1.0;
+    SKLabelNode *gameScoreLabel = [SKLabelNode labelNodeWithFontNamed:FONT_FUTURE];
+    gameScoreLabel.fontColor = [SKColor whiteColor];
+    gameScoreLabel.text = [NSString stringWithFormat:@"SCORE: %ld", (long)self.gameScore];
+    gameScoreLabel.name = SCORE;
+    gameScoreLabel.position = CGPointMake(self.size.width/2, self.size.height-gameScoreLabel.frame.size.height);
+    gameScoreLabel.zPosition = 10;
+    gameScoreLabel.fontSize = 20;
+    [self addChild:gameScoreLabel];
+    
     self.physicsWorld.gravity = CGVectorMake(0,0);
     self.physicsWorld.contactDelegate = self;
     
+    self.laserCounter = 0;
     self.starCounter = 0;
-    self.meteorCounter = 400;
-    self.meteorCounterMaxValue = 400;
+    self.meteorCounter = 500;
+    self.meteorCounterMaxValue = 1000;
     
     [[SceneManager sharedSceneManager] generateBasicStars:self];
     [[SceneManager sharedSceneManager] createBackgroundWithScene:self imageNamed:BACKGROUND_PURPLE];
@@ -218,16 +227,8 @@ static const uint32_t meteorCategory            =  0x1 << 2;
     [self addChild:leftControl];
     
     SKSpriteNode *rightControl = [self createControlWithName:RIGHT_SHADED_CONTROL pressedControlName:RIGHT_FLAT_CONTROL];
-    rightControl.position = CGPointMake(leftControl.position.x + leftControl.size.width + 10, 10);
+    rightControl.position = CGPointMake(self.size.width-rightControl.size.width, 10);
     [self addChild:rightControl];
-    
-    SKSpriteNode *shotControl = [self createControlWithName:SHOT_SHADED_CONTROL pressedControlName:SHOT_FLAT_CONTROL];
-    shotControl.position = CGPointMake(self.size.width - shotControl.size.width - shotControl.size.width / 2, 10);
-    [self addChild:shotControl];
-    
-    SKSpriteNode *shieldControl = [self createControlWithName:SHIELD_SHADED_CONTROL pressedControlName:SHIELD_FLAT_CONTROL];
-    shieldControl.position = CGPointMake(self.size.width - shieldControl.size.width - 10, shotControl.position.y + shotControl.size.height + 10);
-    [self addChild:shieldControl];
     
 }
 
@@ -252,6 +253,15 @@ static const uint32_t meteorCategory            =  0x1 << 2;
     [control addChild:controlPressed];
     
     return control;
+}
+
+- (void)countGameScore:(NSInteger)value {
+    SKLabelNode *label = (SKLabelNode *)[self childNodeWithName:SCORE];
+    self.gameScore = self.gameScore + value;
+    if (self.gameScore % 100 == 0) {
+        self.complexityDelta = self.complexityDelta + 0.1;
+    }
+    label.text = [NSString stringWithFormat:@"SCORE: %ld", self.gameScore];
 }
 
 - (void)controlsActions {
@@ -287,11 +297,16 @@ static const uint32_t meteorCategory            =  0x1 << 2;
 
 - (void)checkPlayerHealth {
     
-    if (self.lastPlayerHealth >= self.player.health) {
+    if (self.lastPlayerHealth > self.player.health) {
         [self childNodeWithName:[NSString stringWithFormat:@"health%ld", (long)self.lastPlayerHealth]].alpha = 0.5;
+        
+        SKAction *colorize = [SKAction colorizeWithColor:[SKColor redColor] colorBlendFactor:0.5 duration:2];
+        SKAction *unColorize = [SKAction colorizeWithColor:[SKColor redColor] colorBlendFactor:0 duration:2];
+        [self.player runAction:[SKAction sequence:@[colorize, unColorize]]];
+        
         self.lastPlayerHealth = self.player.health;
     }
-    if (self.lastPlayerHealth <= self.player.health) {
+    if (self.lastPlayerHealth < self.player.health) {
         [self childNodeWithName:[NSString stringWithFormat:@"health%ld", (long)self.lastPlayerHealth]].alpha = 1;
         self.lastPlayerHealth = self.player.health;
     }
@@ -303,8 +318,8 @@ static const uint32_t meteorCategory            =  0x1 << 2;
 
 - (void)playerShot {
     
-    if (![self childNodeWithName:PLAYER_LASER]) {
-        SKSpriteNode *playerLaser = [SKSpriteNode spriteNodeWithImageNamed:@"laserBlue04"];
+    if (self.laserCounter > self.player.laserSpeed) {
+        SKSpriteNode *playerLaser = [SKSpriteNode spriteNodeWithImageNamed:@"laserRed04"];
         playerLaser.anchorPoint = CGPointMake(0.5, 0);
         playerLaser.position = CGPointMake(self.player.position.x, self.player.position.y+self.player.size.height/2);
         playerLaser.zPosition = 5;
@@ -320,6 +335,9 @@ static const uint32_t meteorCategory            =  0x1 << 2;
             [playerLaser removeFromParent];
         }];
         [self addChild:playerLaser];
+        self.laserCounter = 0;
+    } else {
+        self.laserCounter++;
     }
     
 }
@@ -335,7 +353,7 @@ static const uint32_t meteorCategory            =  0x1 << 2;
     else
         maxValue = self.meteorCounterMaxValue - arc4random_uniform((uint32_t)(self.meteorCounterMaxValue));
     
-    if (self.meteorCounter > maxValue) {
+    if (self.meteorCounter > maxValue/self.complexityDelta) {
         NSInteger meteorIndex = arc4random_uniform(12)+1;
         Meteor *meteor = [Meteor spriteNodeWithImageNamed:[NSString stringWithFormat:@"meteor%ld", (long)meteorIndex] type:meteorIndex > 6 ? meteorGreyType : meteorBrownType];
         meteor.position = CGPointMake((arc4random() % (uint32_t)self.size.width), self.size.height + meteor.size.height);
@@ -343,15 +361,17 @@ static const uint32_t meteorCategory            =  0x1 << 2;
         meteor.zRotation = (M_PI_2 / 180) * arc4random_uniform(361);
         [meteor setScale:0.8];
         
-        meteor.physicsBody = [SKPhysicsBody bodyWithCircleOfRadius:meteor.size.width/2];
+        meteor.physicsBody = [SKPhysicsBody bodyWithCircleOfRadius:meteor.size.width/2-meteor.size.width/8];
         meteor.physicsBody.categoryBitMask = meteorCategory;
         meteor.physicsBody.collisionBitMask = meteorCategory;
         meteor.physicsBody.contactTestBitMask = meteorCategory;
         
-        NSInteger moveDuration = arc4random_uniform(6)+6;
+        NSInteger moveDuration = (arc4random_uniform(6)+6)/self.complexityDelta;
         
         SKAction *moveYAction = [SKAction moveToY:0 - meteor.size.width duration:moveDuration];
-        [meteor runAction:moveYAction];
+        [meteor runAction:moveYAction completion:^{
+            [meteor removeFromParent];
+        }];
         
         NSInteger moveX;
             if (arc4random_uniform(2))
@@ -363,8 +383,10 @@ static const uint32_t meteorCategory            =  0x1 << 2;
         
         if (meteorIndex == 5 || meteorIndex == 6 || meteorIndex == 11 || meteorIndex == 12) {
             meteor.health = 1;
+            meteor.scoreWeight = 5;
         } else {
             meteor.health = 3;
+            meteor.scoreWeight = 10;
         }
         
         [self addChild:meteor];

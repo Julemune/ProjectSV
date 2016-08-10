@@ -10,6 +10,7 @@ typedef enum {
 @property (assign, nonatomic) MeteorType meteorType;
 
 @property (assign, nonatomic) NSInteger health;
+@property (assign, nonatomic) NSInteger scoreWeight;
 
 + (Meteor *)spriteNodeWithImageNamed:(NSString *)name type:(MeteorType)type;
 

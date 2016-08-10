@@ -106,7 +106,7 @@
         star.alpha = 0.6;
         [star setScale:0.4];
         
-        SKAction *moveAction = [SKAction moveToY:star.position.y - scene.size.height duration:6];
+        SKAction *moveAction = [SKAction moveToY:star.position.y - scene.size.height duration:5];
         [star runAction:moveAction completion:^{
             [star removeFromParent];
         }];
@@ -125,11 +125,28 @@
     star.alpha = 0.6;
     [star setScale:0.4];
     
-    SKAction *moveAction = [SKAction moveToY:0 - star.size.width duration:6];
+    SKAction *moveAction = [SKAction moveToY:0 - star.size.width duration:5];
     [star runAction:moveAction completion:^{
         [star removeFromParent];
     }];
         
+    return star;
+    
+}
+
+- (SKSpriteNode *)generateStarWithViewSize:(CGSize)size speedDelta:(float)speedDelta {
+    
+    SKSpriteNode *star = [SKSpriteNode spriteNodeWithImageNamed:[NSString stringWithFormat:@"star%d", arc4random_uniform(3)+1]];
+    star.position = CGPointMake((arc4random() % (uint32_t)size.width), size.height + star.size.height);
+    star.zPosition = 1;
+    star.alpha = 0.6;
+    [star setScale:0.4];
+    
+    SKAction *moveAction = [SKAction moveToY:0 - star.size.width duration:5/speedDelta];
+    [star runAction:moveAction completion:^{
+        [star removeFromParent];
+    }];
+    
     return star;
     
 }

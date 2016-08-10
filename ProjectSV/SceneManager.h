@@ -23,5 +23,6 @@
 
 - (void)generateBasicStars:(SKScene *)scene;
 - (SKSpriteNode *)generateStarWithViewSize:(CGSize)size;
+- (SKSpriteNode *)generateStarWithViewSize:(CGSize)size speedDelta:(float)speedDelta;
 
 @end

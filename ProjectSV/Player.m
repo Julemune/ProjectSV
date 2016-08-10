@@ -30,20 +30,24 @@
     
     switch (type) {
         case playerShip1:
-            player.speed = 5;
+            player.speed = 2;
             player.maxHealth = 4;
+            player.laserSpeed = 20;
             break;
         case playerShip2:
-            player.speed = 8;
+            player.speed = 5;
             player.maxHealth = 3;
+            player.laserSpeed = 15;
             break;
         case playerShip3:
-            player.speed = 11;
+            player.speed = 8;
             player.maxHealth = 2;
+            player.laserSpeed = 10;
             break;
         default:
-            player.speed = 8;
+            player.speed = 5;
             player.maxHealth = 3;
+            player.laserSpeed = 15;
             break;
     }
     
