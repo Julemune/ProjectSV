@@ -23,6 +23,7 @@
 		2E278CE61D54CCE800D5B59C /* SceneManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 2E278CE51D54CCE800D5B59C /* SceneManager.m */; };
 		2E29D28F1D59CB2600A0870F /* GameOverScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 2E29D28E1D59CB2600A0870F /* GameOverScene.m */; };
 		2E29D2921D5A03EC00A0870F /* Meteor.m in Sources */ = {isa = PBXBuildFile; fileRef = 2E29D2911D5A03EC00A0870F /* Meteor.m */; };
+		2E3B71821D5B5175005C0A7D /* Enemy.m in Sources */ = {isa = PBXBuildFile; fileRef = 2E3B71811D5B5175005C0A7D /* Enemy.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,6 +74,8 @@
 		2E29D28E1D59CB2600A0870F /* GameOverScene.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GameOverScene.m; sourceTree = "<group>"; };
 		2E29D2901D5A03EC00A0870F /* Meteor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Meteor.h; sourceTree = "<group>"; };
 		2E29D2911D5A03EC00A0870F /* Meteor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Meteor.m; sourceTree = "<group>"; };
+		2E3B71801D5B5175005C0A7D /* Enemy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Enemy.h; sourceTree = "<group>"; };
+		2E3B71811D5B5175005C0A7D /* Enemy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Enemy.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -194,6 +197,8 @@
 			children = (
 				2E278CD51D54AD0500D5B59C /* Player.h */,
 				2E278CD61D54AD0500D5B59C /* Player.m */,
+				2E3B71801D5B5175005C0A7D /* Enemy.h */,
+				2E3B71811D5B5175005C0A7D /* Enemy.m */,
 				2E29D2901D5A03EC00A0870F /* Meteor.h */,
 				2E29D2911D5A03EC00A0870F /* Meteor.m */,
 			);
@@ -339,6 +344,7 @@
 				2E278CCB1D54A48700D5B59C /* GameScene.m in Sources */,
 				2E278C911D549DE300D5B59C /* AppDelegate.m in Sources */,
 				2E278CD71D54AD0500D5B59C /* Player.m in Sources */,
+				2E3B71821D5B5175005C0A7D /* Enemy.m in Sources */,
 				2E278CE61D54CCE800D5B59C /* SceneManager.m in Sources */,
 				2E29D28F1D59CB2600A0870F /* GameOverScene.m in Sources */,
 				2E278C8E1D549DE300D5B59C /* main.m in Sources */,

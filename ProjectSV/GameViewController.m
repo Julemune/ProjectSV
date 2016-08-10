@@ -22,6 +22,8 @@
     /* Sprite Kit applies additional optimizations to improve rendering performance */
     skView.ignoresSiblingOrder = YES;
     
+//    skView.showsPhysics = YES;
+    
     // Create and configure the scene.
     MenuScene *scene = [[MenuScene alloc] initWithSize:self.view.frame.size];
     scene.scaleMode = SKSceneScaleModeAspectFill;

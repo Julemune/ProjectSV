@@ -13,12 +13,16 @@
 
 #define SCORE @"score"
 
-#define PLAYER @"player"
-#define PLAYER_LASER @"playerLaser"
+#define PLAYER          @"player"
+#define PLAYER_LASER    @"playerLaser"
+
+#define POWER_UP_PILL   @"pill"
+#define POWER_UP_SHIELD @"shield"
 
 static const uint32_t playerCategory            =  0x1 << 0;
 static const uint32_t playerLaserCategory       =  0x1 << 1;
 static const uint32_t meteorCategory            =  0x1 << 2;
+static const uint32_t powerUpCategory           =  0x1 << 3;
 
 @interface GameScene() <SKPhysicsContactDelegate>
 
@@ -30,8 +34,13 @@ static const uint32_t meteorCategory            =  0x1 << 2;
 
 @property (assign, nonatomic) NSInteger gameScore;
 @property (assign, nonatomic) float complexityDelta;
+//GameScore counters
+@property (assign, nonatomic) float gameScoreCounter;
+@property (assign, nonatomic) float pillCounter;
+@property (assign, nonatomic) float shieldCounter;
 
 @property (strong, nonatomic) Player *player;
+@property (assign, nonatomic) BOOL shield;
 @property (assign, nonatomic) NSInteger lastPlayerHealth;
 @property (assign, nonatomic) NSInteger laserCounter;
 
@@ -98,6 +107,8 @@ static const uint32_t meteorCategory            =  0x1 << 2;
 
 - (void)update:(NSTimeInterval)currentTime {
     
+    [self countGameScore:1];
+    
     [[SceneManager sharedSceneManager] moveSceneWithScene:self];
     
     if (self.starCounter > 20) {
@@ -123,7 +134,9 @@ static const uint32_t meteorCategory            =  0x1 << 2;
     if (contact.bodyA.categoryBitMask == playerCategory && contact.bodyB.categoryBitMask == meteorCategory) {
         Meteor *meteor = (Meteor *)contact.bodyB.node;
         [meteor explosionAndRemoveFromParrentOnPoint:contact.contactPoint];
-        self.player.health--;
+        if (!self.shield) {
+            self.player.health--;
+        }
     }
     
     if (contact.bodyA.categoryBitMask == meteorCategory && contact.bodyB.categoryBitMask == meteorCategory) {
@@ -150,6 +163,26 @@ static const uint32_t meteorCategory            =  0x1 << 2;
         }];
         [self addChild:expl];
     }
+    
+    if (contact.bodyA.categoryBitMask == playerCategory && contact.bodyB.categoryBitMask == powerUpCategory) {
+        if ([contact.bodyB.node.name isEqualToString:POWER_UP_PILL]) {
+            [contact.bodyB.node removeFromParent];
+            self.player.health++;
+        }
+        if ([contact.bodyB.node.name isEqualToString:POWER_UP_SHIELD]) {
+            self.shield = YES;
+            SKSpriteNode *shield = [SKSpriteNode spriteNodeWithImageNamed:[NSString stringWithFormat:@"playerShield%f", contact.bodyB.node.speed]];
+            shield.zPosition = 6;
+            [shield setScale:0.8];
+            [shield runAction:[SKAction waitForDuration:15+(contact.bodyB.node.speed*15)] completion:^{
+                [shield removeFromParent];
+                self.shield = NO;
+            }];
+            [self.player addChild:shield];
+            
+            [contact.bodyB.node removeFromParent];
+        }
+    }
 
 }
 
@@ -157,8 +190,13 @@ static const uint32_t meteorCategory            =  0x1 << 2;
 
 - (void)createSceneContents {
     
-    self.gameScore = 0;
-    self.complexityDelta = 1.0;
+    self.gameScore          = 0;
+    self.complexityDelta    = 1.0;
+    
+    self.pillCounter        = 0;
+    self.gameScoreCounter   = 0;
+    self.shieldCounter      = 0;
+    
     SKLabelNode *gameScoreLabel = [SKLabelNode labelNodeWithFontNamed:FONT_FUTURE];
     gameScoreLabel.fontColor = [SKColor whiteColor];
     gameScoreLabel.text = [NSString stringWithFormat:@"SCORE: %ld", (long)self.gameScore];
@@ -176,6 +214,7 @@ static const uint32_t meteorCategory            =  0x1 << 2;
     self.meteorCounter = 500;
     self.meteorCounterMaxValue = 1000;
     
+    
     [[SceneManager sharedSceneManager] generateBasicStars:self];
     [[SceneManager sharedSceneManager] createBackgroundWithScene:self imageNamed:BACKGROUND_PURPLE];
     
@@ -188,11 +227,11 @@ static const uint32_t meteorCategory            =  0x1 << 2;
     [self.player setScale:0.8];
     self.player.name = PLAYER;
     
-    self.player.physicsBody = [SKPhysicsBody bodyWithRectangleOfSize:self.player.size];
+    self.player.physicsBody = [SKPhysicsBody bodyWithTexture:self.player.texture size:self.player.texture.size];
     self.player.physicsBody.dynamic = NO;
     self.player.physicsBody.categoryBitMask = playerCategory;
-    self.player.physicsBody.collisionBitMask = meteorCategory;
-    self.player.physicsBody.contactTestBitMask = meteorCategory;
+    self.player.physicsBody.collisionBitMask = meteorCategory | powerUpCategory;
+    self.player.physicsBody.contactTestBitMask = meteorCategory | powerUpCategory;
     
     [self addChild:self.player];
     
@@ -255,15 +294,6 @@ static const uint32_t meteorCategory            =  0x1 << 2;
     return control;
 }
 
-- (void)countGameScore:(NSInteger)value {
-    SKLabelNode *label = (SKLabelNode *)[self childNodeWithName:SCORE];
-    self.gameScore = self.gameScore + value;
-    if (self.gameScore % 100 == 0) {
-        self.complexityDelta = self.complexityDelta + 0.1;
-    }
-    label.text = [NSString stringWithFormat:@"SCORE: %ld", self.gameScore];
-}
-
 - (void)controlsActions {
     
     if (!self.gameOver) {
@@ -295,30 +325,72 @@ static const uint32_t meteorCategory            =  0x1 << 2;
 
 #pragma mark - Game Methods
 
+- (void)countGameScore:(NSInteger)value {
+    
+    SKLabelNode *label = (SKLabelNode *)[self childNodeWithName:SCORE];
+    self.gameScore = self.gameScore + value;
+    
+    if (self.gameScore / 500 > self.gameScoreCounter) {
+        self.complexityDelta = self.complexityDelta + 0.1;
+        self.gameScoreCounter = self.gameScoreCounter + 1.0;
+    }
+    if (self.gameScore / 2000 > self.pillCounter) {
+        self.pillCounter = self.pillCounter + 1.0;
+        [self generatePill];
+    }
+    if (self.gameScore / 1000 > self.shieldCounter) {
+        self.shieldCounter = self.shieldCounter + 1.0;
+        [self generateShield];
+    }
+    
+    label.text = [NSString stringWithFormat:@"SCORE: %ld", self.gameScore];
+    
+}
+
+
 - (void)checkPlayerHealth {
     
-    if (self.lastPlayerHealth > self.player.health) {
-        [self childNodeWithName:[NSString stringWithFormat:@"health%ld", (long)self.lastPlayerHealth]].alpha = 0.5;
-        
-        SKAction *colorize = [SKAction colorizeWithColor:[SKColor redColor] colorBlendFactor:0.5 duration:2];
-        SKAction *unColorize = [SKAction colorizeWithColor:[SKColor redColor] colorBlendFactor:0 duration:2];
-        [self.player runAction:[SKAction sequence:@[colorize, unColorize]]];
-        
-        self.lastPlayerHealth = self.player.health;
-    }
-    if (self.lastPlayerHealth < self.player.health) {
-        [self childNodeWithName:[NSString stringWithFormat:@"health%ld", (long)self.lastPlayerHealth]].alpha = 1;
-        self.lastPlayerHealth = self.player.health;
-    }
-    if (self.player.health == 0) {
-        [self presentGameOver];
+    switch (self.player.health) {
+        case 4:
+            [self childNodeWithName:@"health4"].alpha = 1;
+            [self childNodeWithName:@"health3"].alpha = 1;
+            [self childNodeWithName:@"health2"].alpha = 1;
+            [self childNodeWithName:@"health1"].alpha = 1;
+            break;
+        case 3:
+            [self childNodeWithName:@"health4"].alpha = 0.5;
+            [self childNodeWithName:@"health3"].alpha = 1;
+            [self childNodeWithName:@"health2"].alpha = 1;
+            [self childNodeWithName:@"health1"].alpha = 1;
+            break;
+        case 2:
+            [self childNodeWithName:@"health4"].alpha = 0.5;
+            [self childNodeWithName:@"health3"].alpha = 0.5;
+            [self childNodeWithName:@"health2"].alpha = 1;
+            [self childNodeWithName:@"health1"].alpha = 1;
+            break;
+        case 1:
+            [self childNodeWithName:@"health4"].alpha = 0.5;
+            [self childNodeWithName:@"health3"].alpha = 0.5;
+            [self childNodeWithName:@"health2"].alpha = 0.5;
+            [self childNodeWithName:@"health1"].alpha = 1;
+            break;
+        case 0:
+            [self childNodeWithName:@"health4"].alpha = 0.5;
+            [self childNodeWithName:@"health3"].alpha = 0.5;
+            [self childNodeWithName:@"health2"].alpha = 0.5;
+            [self childNodeWithName:@"health1"].alpha = 0.5;
+            [self presentGameOver];
+            break;
+        default:
+            break;
     }
     
 }
 
 - (void)playerShot {
     
-    if (self.laserCounter > self.player.laserSpeed) {
+    if (self.laserCounter > self.player.laserSpeed || ![self childNodeWithName:PLAYER_LASER]) {
         SKSpriteNode *playerLaser = [SKSpriteNode spriteNodeWithImageNamed:@"laserRed04"];
         playerLaser.anchorPoint = CGPointMake(0.5, 0);
         playerLaser.position = CGPointMake(self.player.position.x, self.player.position.y+self.player.size.height/2);
@@ -327,6 +399,7 @@ static const uint32_t meteorCategory            =  0x1 << 2;
         playerLaser.name = PLAYER_LASER;
         
         playerLaser.physicsBody = [SKPhysicsBody bodyWithRectangleOfSize:playerLaser.size];
+        playerLaser.physicsBody.allowsRotation = NO;
         playerLaser.physicsBody.categoryBitMask = playerLaserCategory;
         playerLaser.physicsBody.collisionBitMask = meteorCategory;
         playerLaser.physicsBody.contactTestBitMask = meteorCategory;
@@ -339,6 +412,55 @@ static const uint32_t meteorCategory            =  0x1 << 2;
     } else {
         self.laserCounter++;
     }
+    
+}
+
+#pragma mark - Power-ups
+
+- (void)generatePill {
+    
+    NSInteger rndPill = arc4random_uniform(4)+1;
+    
+    SKSpriteNode *pill = [SKSpriteNode spriteNodeWithImageNamed:[NSString stringWithFormat:@"pill%ld", (long)rndPill]];
+    pill.position = CGPointMake(arc4random_uniform((uint32_t)self.size.width), self.size.height + pill.size.height);
+    pill.zPosition = 5;
+    [pill setScale:0.8];
+    pill.name = POWER_UP_PILL;
+    
+    pill.physicsBody = [SKPhysicsBody bodyWithRectangleOfSize:pill.size];
+    pill.physicsBody.categoryBitMask = powerUpCategory;
+    pill.physicsBody.collisionBitMask = playerCategory;
+    
+    SKAction *moveYAction = [SKAction moveToY:0 - pill.size.width duration:8];
+    [pill runAction:moveYAction completion:^{
+        [pill removeFromParent];
+    }];
+    
+    [self addChild:pill];
+    
+}
+
+- (void)generateShield {
+    
+    NSInteger rndShield = arc4random_uniform(3)+1;
+    
+    SKSpriteNode *shield = [SKSpriteNode spriteNodeWithImageNamed:[NSString stringWithFormat:@"shield%ld", (long)rndShield]];
+    shield.position = CGPointMake(arc4random_uniform((uint32_t)self.size.width), self.size.height + shield.size.height);
+    shield.zPosition = 5;
+    [shield setScale:0.8];
+    shield.name = POWER_UP_SHIELD;
+    shield.speed = rndShield;
+    
+    shield.physicsBody = [SKPhysicsBody bodyWithRectangleOfSize:shield.size];
+    shield.physicsBody.categoryBitMask = powerUpCategory;
+    shield.physicsBody.collisionBitMask = playerCategory;
+    
+    SKAction *moveYAction = [SKAction moveToY:0 - shield.size.width duration:8];
+    [shield runAction:moveYAction completion:^{
+        [shield removeFromParent];
+    }];
+    
+    [self addChild:shield];
     
 }
 
@@ -366,7 +488,7 @@ static const uint32_t meteorCategory            =  0x1 << 2;
         meteor.physicsBody.collisionBitMask = meteorCategory;
         meteor.physicsBody.contactTestBitMask = meteorCategory;
         
-        NSInteger moveDuration = (arc4random_uniform(6)+6)/self.complexityDelta;
+        NSInteger moveDuration = (arc4random_uniform(3)+9)/self.complexityDelta;
         
         SKAction *moveYAction = [SKAction moveToY:0 - meteor.size.width duration:moveDuration];
         [meteor runAction:moveYAction completion:^{
@@ -383,10 +505,10 @@ static const uint32_t meteorCategory            =  0x1 << 2;
         
         if (meteorIndex == 5 || meteorIndex == 6 || meteorIndex == 11 || meteorIndex == 12) {
             meteor.health = 1;
-            meteor.scoreWeight = 5;
+            meteor.scoreWeight = 50;
         } else {
             meteor.health = 3;
-            meteor.scoreWeight = 10;
+            meteor.scoreWeight = 100;
         }
         
         [self addChild:meteor];
