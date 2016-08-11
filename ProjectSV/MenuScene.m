@@ -9,12 +9,14 @@
 #define MARK            @"mark"
 
 #define START_GAME_BUTTON   @"startGame"
+#define SCORE_LABEL         @"scoreLabel"
 #define PLAY_BUTTON         @"play"
 
 @interface MenuScene()
 
 @property (assign, nonatomic) BOOL contentCreated;
 @property (assign, nonatomic) NSInteger starCounter;
+@property (assign, nonatomic) BOOL start;
 
 @end
 
@@ -31,17 +33,23 @@
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(nullable UIEvent *)event {
     
+    if (!self.start) {
+        [[self childNodeWithName:SCORE_LABEL] runAction:[SKAction fadeOutWithDuration:0.5] completion:^{
+            [[self childNodeWithName:SCORE_LABEL] removeFromParent];
+        }];
+        [[self childNodeWithName:START_GAME_BUTTON] runAction:[SKAction fadeOutWithDuration:0.5] completion:^{
+            [[self childNodeWithName:START_GAME_BUTTON] removeFromParent];
+            [self presentPlayerSelectScreen];
+        }];
+        self.start = YES;
+    }
+    
     for (UITouch *touch in touches) {
         
         CGPoint location = [touch locationInNode:self];
         
-        if (CGRectContainsPoint([self childNodeWithName:START_GAME_BUTTON].frame, location)) {
-            [[self childNodeWithName:START_GAME_BUTTON] runAction:[SKAction fadeOutWithDuration:0.5] completion:^{
-                [[self childNodeWithName:START_GAME_BUTTON] removeFromParent];
-                [self presentPlayerSelectScreen];
-            }];
-        }
-        if (CGRectContainsPoint([self childNodeWithName:PLAY_BUTTON].frame, location)) {            [self presentGameScene];
+        if (CGRectContainsPoint([self childNodeWithName:PLAY_BUTTON].frame, location)) {
+            [self presentGameScene];
         }
         if (CGRectContainsPoint([self childNodeWithName:PLAYER_SHIP_1].frame, location)) {
             [self childNodeWithName:MARK].position = CGPointMake([self childNodeWithName:PLAYER_SHIP_1].position.x, [self childNodeWithName:MARK].position.y);
@@ -89,15 +97,28 @@
 - (void)createMenuItems {
     
     SKLabelNode *startGameLabel = [SKLabelNode labelNodeWithText:@"Start Game"];
-    
-    startGameLabel.position = CGPointMake(CGRectGetMidX(self.frame),CGRectGetMidY(self.frame));
+    startGameLabel.position = CGPointMake(CGRectGetMidX(self.frame),CGRectGetMidY(self.frame)+20);
     startGameLabel.zPosition = 5;
     startGameLabel.fontName = FONT_FUTURE;
     startGameLabel.fontSize = 30;
     startGameLabel.fontColor = [SKColor whiteColor];
     startGameLabel.name = START_GAME_BUTTON;
-    
     [self addChild:startGameLabel];
+    
+    NSString *labelTxt = @"Best score: 0";
+    
+    if ([[NSUserDefaults standardUserDefaults]objectForKey:@"bestScore"]) {
+        labelTxt = [NSString stringWithFormat:@"Best score: %ld", (long)[[[NSUserDefaults standardUserDefaults]objectForKey:@"bestScore"] integerValue]];
+    }
+    
+    SKLabelNode *scoreLabel = [SKLabelNode labelNodeWithText:labelTxt];
+    scoreLabel.position = CGPointMake(CGRectGetMidX(self.frame),CGRectGetMidY(self.frame)-20);
+    scoreLabel.zPosition = 5;
+    scoreLabel.fontName = FONT_FUTURE;
+    scoreLabel.fontSize = 25;
+    scoreLabel.fontColor = [SKColor whiteColor];
+    scoreLabel.name = SCORE_LABEL;
+    [self addChild:scoreLabel];
     
 }
 

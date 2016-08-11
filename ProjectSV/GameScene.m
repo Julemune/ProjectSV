@@ -93,11 +93,15 @@ static const uint32_t powerUpCategory           =  0x1 << 5;
         if (CGRectContainsPoint([self childNodeWithName:LEFT_SHADED_CONTROL].frame, location)) {
             [[self childNodeWithName:LEFT_SHADED_CONTROL] childNodeWithName:LEFT_FLAT_CONTROL].hidden = NO;
             self.leftControlPressed = YES;
+            [[self childNodeWithName:RIGHT_SHADED_CONTROL] childNodeWithName:RIGHT_FLAT_CONTROL].hidden = YES;
+            self.rightControlPressed = NO;
         }
         
         if (CGRectContainsPoint([self childNodeWithName:RIGHT_SHADED_CONTROL].frame, location)) {
             [[self childNodeWithName:RIGHT_SHADED_CONTROL] childNodeWithName:RIGHT_FLAT_CONTROL].hidden = NO;
             self.rightControlPressed = YES;
+            [[self childNodeWithName:LEFT_SHADED_CONTROL] childNodeWithName:LEFT_FLAT_CONTROL].hidden = YES;
+            self.leftControlPressed = NO;
         }
         
     }
@@ -153,6 +157,7 @@ static const uint32_t powerUpCategory           =  0x1 << 5;
         Meteor *meteor = (Meteor *)contact.bodyB.node;
         [meteor explosionAndRemoveFromParrentOnPoint:contact.contactPoint];
         if (!self.shield) {
+            [self showRedScreen];
             self.player.health--;
         }
     }
@@ -163,6 +168,7 @@ static const uint32_t powerUpCategory           =  0x1 << 5;
             [self runAction:[SKAction playSoundFileNamed:@"enemyShotPlayer.mp3" waitForCompletion:NO]];
             if (!self.shield) {
                 self.player.health--;
+                [self showRedScreen];
             }
             self.crutchForEnemy = YES;
             [self runAction:[SKAction waitForDuration:0.1] completion:^{
@@ -224,6 +230,11 @@ static const uint32_t powerUpCategory           =  0x1 << 5;
         
     }
     
+    if (contact.bodyA.categoryBitMask == playerLaserCategory && contact.bodyB.categoryBitMask == enemyLaserCategory) {
+        [contact.bodyA.node removeFromParent];
+        [contact.bodyB.node removeFromParent];
+    }
+    
     if (contact.bodyA.categoryBitMask == meteorCategory && contact.bodyB.categoryBitMask == meteorCategory) {
         [contact.bodyA.node removeActionForKey:@"moveXAction"];
         [contact.bodyB.node removeActionForKey:@"moveXAction"];
@@ -232,17 +243,21 @@ static const uint32_t powerUpCategory           =  0x1 << 5;
     if (contact.bodyA.categoryBitMask == playerCategory && contact.bodyB.categoryBitMask == powerUpCategory) {
         if ([contact.bodyB.node.name isEqualToString:POWER_UP_PILL]) {
             [contact.bodyB.node removeFromParent];
+            if (self.player.health < self.player.maxHealth)
+                [self showGreenScreen];
             self.player.health++;
         }
         
         if ([contact.bodyB.node.name isEqualToString:POWER_UP_SHIELD]) {
+            [self runAction:[SKAction playSoundFileNamed:@"shieldUp.mp3" waitForCompletion:NO]];
             self.shield = YES;
             SKSpriteNode *shield = [SKSpriteNode spriteNodeWithImageNamed:[NSString stringWithFormat:@"playerShield%f", contact.bodyB.node.speed]];
             shield.zPosition = 6;
             [shield setScale:0.8];
-            SKAction *duration = [SKAction waitForDuration:15.f + (contact.bodyB.node.speed*15)];
+            SKAction *duration = [SKAction waitForDuration:15.f + (contact.bodyB.node.speed*10)];
             [shield runAction:duration completion:^{
                 [shield removeFromParent];
+                [self runAction:[SKAction playSoundFileNamed:@"shieldDown.mp3" waitForCompletion:NO]];
                 self.shield = NO;
             }];
             [self.player addChild:shield];
@@ -285,9 +300,9 @@ static const uint32_t powerUpCategory           =  0x1 << 5;
     self.laserCounter       = 0;
     
     self.meteorCounter              = 500;
-    self.meteorCounterMaxValue      = 1400;
+    self.meteorCounterMaxValue      = 2000;
     self.enemyCounter               = 1000;
-    self.enemyCounterMaxValue       = 1600;
+    self.enemyCounterMaxValue       = 1800;
     self.counterOfEnemies           = 0;
     self.counterOfEnemiesMaxValue   = 2;
     self.enemyType                  = 0;
@@ -398,9 +413,44 @@ static const uint32_t powerUpCategory           =  0x1 << 5;
     
 }
 
+- (void)showRedScreen {
+    
+    SKShapeNode *shapeNode = [SKShapeNode shapeNodeWithRect:self.frame];
+    shapeNode.position = CGPointMake(0, 0);
+    shapeNode.zPosition = 9;
+    shapeNode.fillColor = [SKColor redColor];
+    shapeNode.alpha = 0.4;
+    [shapeNode runAction:[SKAction fadeOutWithDuration:0.4] completion:^{
+        [shapeNode removeFromParent];
+    }];
+    
+    [self addChild:shapeNode];
+    
+}
+
+- (void)showGreenScreen {
+    
+    SKShapeNode *shapeNode = [SKShapeNode shapeNodeWithRect:self.frame];
+    shapeNode.position = CGPointMake(0, 0);
+    shapeNode.zPosition = 9;
+    shapeNode.fillColor = [SKColor greenColor];
+    shapeNode.alpha = 0.2;
+    [shapeNode runAction:[SKAction fadeOutWithDuration:0.4] completion:^{
+        [shapeNode removeFromParent];
+    }];
+    
+    [self addChild:shapeNode];
+    
+}
+
 - (void)presentGameOver {
     
     if (!self.gameOver) {
+        
+        if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"bestScore"] integerValue] < self.gameScore) {
+            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithInteger:self.gameScore] forKey:@"bestScore"];
+        }
+        
         self.gameOver = YES;
         [self runAction:[SKAction waitForDuration:0.4] completion:^{
             [self.backgroundAudioPlayer stop];
@@ -485,8 +535,8 @@ static const uint32_t powerUpCategory           =  0x1 << 5;
         playerLaser.physicsBody = [SKPhysicsBody bodyWithRectangleOfSize:playerLaser.size];
         playerLaser.physicsBody.allowsRotation = NO;
         playerLaser.physicsBody.categoryBitMask = playerLaserCategory;
-        playerLaser.physicsBody.collisionBitMask = meteorCategory | enemyCategory;
-        playerLaser.physicsBody.contactTestBitMask = meteorCategory | enemyCategory;
+        playerLaser.physicsBody.collisionBitMask = meteorCategory | enemyCategory | enemyLaserCategory;
+        playerLaser.physicsBody.contactTestBitMask = meteorCategory | enemyCategory | enemyLaserCategory;
         
         [playerLaser runAction:[SKAction moveToY:self.size.height duration:1] completion:^{
             [playerLaser removeFromParent];
@@ -521,12 +571,12 @@ static const uint32_t powerUpCategory           =  0x1 << 5;
         self.gameScoreCounter = self.gameScoreCounter + 1.0;
     }
     //Spawn pill
-    if (self.gameScore / 2500 > self.pillCounter) {
+    if (self.gameScore / 2000 > self.pillCounter) {
         self.pillCounter = self.pillCounter + 1.0;
         [self generatePill];
     }
     //Spawn shiels
-    if (self.gameScore / 3000 > self.shieldCounter) {
+    if (self.gameScore / 2500 > self.shieldCounter) {
         self.shieldCounter = self.shieldCounter + 1.0;
         [self generateShield];
     }
@@ -551,7 +601,7 @@ static const uint32_t powerUpCategory           =  0x1 << 5;
     pill.physicsBody.categoryBitMask = powerUpCategory;
     pill.physicsBody.collisionBitMask = playerCategory;
     
-    SKAction *moveYAction = [SKAction moveToY:0 - pill.size.width duration:8];
+    SKAction *moveYAction = [SKAction moveToY:0 - pill.size.width duration:5];
     [pill runAction:moveYAction completion:^{
         [pill removeFromParent];
     }];
@@ -608,7 +658,7 @@ static const uint32_t powerUpCategory           =  0x1 << 5;
         meteor.physicsBody.collisionBitMask = meteorCategory;
         meteor.physicsBody.contactTestBitMask = meteorCategory;
         
-        NSInteger moveDuration = (arc4random_uniform(3)+9)/self.complexityDelta;
+        NSInteger moveDuration = (arc4random_uniform(3)+8)-(self.complexityDelta+self.complexityDelta);
         
         SKAction *moveYAction = [SKAction moveToY:0 - meteor.size.width duration:moveDuration];
         [meteor runAction:moveYAction completion:^{
@@ -627,7 +677,7 @@ static const uint32_t powerUpCategory           =  0x1 << 5;
             meteor.health = 1;
             meteor.scoreWeight = 50;
         } else {
-            meteor.health = 3;
+            meteor.health = 2;
             meteor.scoreWeight = 100;
         }
         
@@ -700,10 +750,10 @@ static const uint32_t powerUpCategory           =  0x1 << 5;
             [enemyLaser setScale:0.8];
             enemyLaser.name = ENEMY_LASER;
             
-            enemyLaser.physicsBody = [SKPhysicsBody bodyWithRectangleOfSize:enemyLaser.size];
+            enemyLaser.physicsBody = [SKPhysicsBody bodyWithCircleOfRadius:enemyLaser.size.height/2];
             enemyLaser.physicsBody.allowsRotation = NO;
             enemyLaser.physicsBody.categoryBitMask      = enemyLaserCategory;
-            enemyLaser.physicsBody.collisionBitMask     = playerCategory;
+            enemyLaser.physicsBody.collisionBitMask     = playerCategory | playerLaserCategory;
             enemyLaser.physicsBody.contactTestBitMask   = playerCategory;
             
             [enemyLaser runAction:[SKAction moveTo:CGPointMake(enemy.position.x, 0) duration:1.5] completion:^{

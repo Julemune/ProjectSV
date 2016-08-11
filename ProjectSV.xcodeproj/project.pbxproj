@@ -29,6 +29,8 @@
 		2E64AA6C1D5CAD1F00B812C5 /* enemyShotPlayer.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 2E64AA6B1D5CAD1F00B812C5 /* enemyShotPlayer.mp3 */; };
 		2E64AA6E1D5CAD3400B812C5 /* playerShotMeteor.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 2E64AA6D1D5CAD3400B812C5 /* playerShotMeteor.mp3 */; };
 		2E64AA741D5CB20100B812C5 /* lose.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 2E64AA731D5CB20100B812C5 /* lose.mp3 */; };
+		2E64AA771D5CD4B900B812C5 /* shieldUp.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 2E64AA751D5CD4B900B812C5 /* shieldUp.mp3 */; };
+		2E64AA781D5CD4B900B812C5 /* shieldDown.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 2E64AA761D5CD4B900B812C5 /* shieldDown.mp3 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -86,6 +88,8 @@
 		2E64AA6B1D5CAD1F00B812C5 /* enemyShotPlayer.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = enemyShotPlayer.mp3; sourceTree = "<group>"; };
 		2E64AA6D1D5CAD3400B812C5 /* playerShotMeteor.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = playerShotMeteor.mp3; sourceTree = "<group>"; };
 		2E64AA731D5CB20100B812C5 /* lose.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = lose.mp3; sourceTree = "<group>"; };
+		2E64AA751D5CD4B900B812C5 /* shieldUp.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = shieldUp.mp3; sourceTree = "<group>"; };
+		2E64AA761D5CD4B900B812C5 /* shieldDown.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = shieldDown.mp3; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -219,6 +223,8 @@
 		2E64AA601D5C8A4700B812C5 /* Sounds */ = {
 			isa = PBXGroup;
 			children = (
+				2E64AA751D5CD4B900B812C5 /* shieldUp.mp3 */,
+				2E64AA761D5CD4B900B812C5 /* shieldDown.mp3 */,
 				2E64AA731D5CB20100B812C5 /* lose.mp3 */,
 				2E64AA691D5CACC300B812C5 /* playerShotEnemy.mp3 */,
 				2E64AA6D1D5CAD3400B812C5 /* playerShotMeteor.mp3 */,
@@ -333,6 +339,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2E278CA11D549DE300D5B59C /* LaunchScreen.storyboard in Resources */,
+				2E64AA781D5CD4B900B812C5 /* shieldDown.mp3 in Resources */,
 				2E64AA741D5CB20100B812C5 /* lose.mp3 in Resources */,
 				2E278CD41D54AB0100D5B59C /* kenvector_future.ttf in Resources */,
 				2E278C9E1D549DE300D5B59C /* Assets.xcassets in Resources */,
@@ -341,6 +348,7 @@
 				2E64AA6E1D5CAD3400B812C5 /* playerShotMeteor.mp3 in Resources */,
 				2E278CD31D54AAFF00D5B59C /* kenvector_future_thin.ttf in Resources */,
 				2E278C9C1D549DE300D5B59C /* Main.storyboard in Resources */,
+				2E64AA771D5CD4B900B812C5 /* shieldUp.mp3 in Resources */,
 				2E64AA681D5C8F6B00B812C5 /* backgroundMusic.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

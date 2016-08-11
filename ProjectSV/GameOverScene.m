@@ -56,15 +56,23 @@
     [self runAction:[SKAction playSoundFileNamed:@"lose.mp3" waitForCompletion:NO]];
     
     SKLabelNode *gameOverLabel  = [SKLabelNode labelNodeWithText:@"GAME OVER"];
-    gameOverLabel.position      = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame)+30);
+    gameOverLabel.position      = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame)+40);
     gameOverLabel.zPosition     = 12;
     gameOverLabel.fontName      = FONT_FUTURE;
     gameOverLabel.fontSize      = 40;
     gameOverLabel.fontColor     = [SKColor whiteColor];
     [self addChild:gameOverLabel];
     
+    SKLabelNode *scoreLabel = [SKLabelNode labelNodeWithText:[NSString stringWithFormat:@"Your score: %ld", (long)[[[NSUserDefaults standardUserDefaults]objectForKey:@"bestScore"] integerValue]]];
+    scoreLabel.position = CGPointMake(CGRectGetMidX(self.frame),CGRectGetMidY(self.frame));
+    scoreLabel.zPosition = 5;
+    scoreLabel.fontName = FONT_FUTURE;
+    scoreLabel.fontSize = 25;
+    scoreLabel.fontColor = [SKColor whiteColor];
+    [self addChild:scoreLabel];
+    
     SKLabelNode *goBackLabel    = [SKLabelNode labelNodeWithText:@"Tap to go to menu"];
-    goBackLabel.position        = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame)-30);
+    goBackLabel.position        = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame)-40);
     goBackLabel.zPosition       = 12;
     goBackLabel.fontName        = FONT_FUTURE;
     goBackLabel.fontSize        = 25;
