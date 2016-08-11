@@ -37,11 +37,13 @@
         
         if (CGRectContainsPoint([self childNodeWithName:START_GAME_BUTTON].frame, location)) {
             [[self childNodeWithName:START_GAME_BUTTON] runAction:[SKAction fadeOutWithDuration:0.5] completion:^{
+                [self runAction:[SKAction playSoundFileNamed:@"click1.wav" waitForCompletion:NO]];
                 [[self childNodeWithName:START_GAME_BUTTON] removeFromParent];
                 [self presentPlayerSelectScreen];
             }];
         }
         if (CGRectContainsPoint([self childNodeWithName:PLAY_BUTTON].frame, location)) {
+            [self runAction:[SKAction playSoundFileNamed:@"click1.wav" waitForCompletion:NO]];
             [self presentGameScene];
         }
         if (CGRectContainsPoint([self childNodeWithName:PLAYER_SHIP_1].frame, location)) {
@@ -63,7 +65,7 @@
 
 - (void)update:(NSTimeInterval)currentTime {
     
-    [[SceneManager sharedSceneManager] moveSceneWithScene:self];
+    [[SceneManager sharedSceneManager] moveSceneWithScene:self speed:1];
     
     if (self.starCounter > 20) {
         [self addChild:[[SceneManager sharedSceneManager] generateStarWithViewSize:self.size]];

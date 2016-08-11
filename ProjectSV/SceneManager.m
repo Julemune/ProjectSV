@@ -29,12 +29,12 @@
     
 }
 
-- (void)moveSceneWithScene:(SKScene *)scene {
+- (void)moveSceneWithScene:(SKScene *)scene speed:(NSInteger)speed {
     
     SKSpriteNode *backgroundSprite1 = (SKSpriteNode *)[scene childNodeWithName:BACKGROUND_SPRITE_1];
     SKSpriteNode *backgroundSprite2 = (SKSpriteNode *)[scene childNodeWithName:BACKGROUND_SPRITE_2];
     
-    [self moveBackgroundWithFirstSprite:backgroundSprite1 secondSprite:backgroundSprite2 speed:1];
+    [self moveBackgroundWithFirstSprite:backgroundSprite1 secondSprite:backgroundSprite2 speed:speed];
     
 }
 

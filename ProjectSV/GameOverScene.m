@@ -27,7 +27,7 @@
 
 - (void)update:(NSTimeInterval)currentTime {
     
-    [[SceneManager sharedSceneManager] moveSceneWithScene:self];
+    [[SceneManager sharedSceneManager] moveSceneWithScene:self speed:1];
     
     if (self.starCounter > 20) {
         [self addChild:[[SceneManager sharedSceneManager] generateStarWithViewSize:self.size]];

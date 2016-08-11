@@ -19,7 +19,7 @@
 + (SceneManager *)sharedSceneManager;
 
 - (void)createBackgroundWithScene:(SKScene *)scene imageNamed:(NSString *)name;
-- (void)moveSceneWithScene:(SKScene *)scene;
+- (void)moveSceneWithScene:(SKScene *)scene speed:(NSInteger)speed;
 
 - (void)generateBasicStars:(SKScene *)scene;
 - (SKSpriteNode *)generateStarWithViewSize:(CGSize)size;
