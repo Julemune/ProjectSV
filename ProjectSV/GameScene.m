@@ -20,13 +20,17 @@
 #define POWER_UP_PILL   @"pill"
 #define POWER_UP_SHIELD @"shield"
 
+#define ENEMY          @"enemy"
+#define ENEMY_LASER    @"enemyLaser"
+
 @import AVFoundation;
 
 static const uint32_t playerCategory            =  0x1 << 0;
 static const uint32_t playerLaserCategory       =  0x1 << 1;
 static const uint32_t meteorCategory            =  0x1 << 2;
 static const uint32_t enemyCategory             =  0x1 << 3;
-static const uint32_t powerUpCategory           =  0x1 << 4;
+static const uint32_t enemyLaserCategory        =  0x1 << 4;
+static const uint32_t powerUpCategory           =  0x1 << 5;
 
 @interface GameScene() <SKPhysicsContactDelegate>
 
@@ -59,6 +63,8 @@ static const uint32_t powerUpCategory           =  0x1 << 4;
 @property (assign, nonatomic) NSInteger enemyCounterMaxValue;
 @property (assign, nonatomic) NSInteger counterOfEnemies;
 @property (assign, nonatomic) NSInteger counterOfEnemiesMaxValue;
+@property (assign, nonatomic) NSInteger enemyType;
+@property (assign, nonatomic) BOOL crutchForEnemy;
 
 @end
 
@@ -151,7 +157,31 @@ static const uint32_t powerUpCategory           =  0x1 << 4;
         }
     }
     
+    if (contact.bodyA.categoryBitMask == playerCategory && contact.bodyB.categoryBitMask == enemyLaserCategory) {
+        [contact.bodyB.node removeFromParent];
+        if (!self.crutchForEnemy) {
+            [self runAction:[SKAction playSoundFileNamed:@"enemyShotPlayer.mp3" waitForCompletion:NO]];
+            if (!self.shield) {
+                self.player.health--;
+            }
+            self.crutchForEnemy = YES;
+            [self runAction:[SKAction waitForDuration:0.1] completion:^{
+                self.crutchForEnemy = NO;
+            }];
+        }
+        
+        SKSpriteNode *expl  = [SKSpriteNode spriteNodeWithImageNamed:[NSString stringWithFormat:@"laserGreenExpl%d", arc4random_uniform(4)+1]];
+        expl.position       = contact.contactPoint;
+        expl.zPosition      = 6;
+        [expl setScale:0.8];
+        [expl runAction:[SKAction waitForDuration:0.1] completion:^{
+            [expl removeFromParent];
+        }];
+        [self addChild:expl];
+    }
+    
     if (contact.bodyA.categoryBitMask == playerLaserCategory && contact.bodyB.categoryBitMask == meteorCategory) {
+        [self runAction:[SKAction playSoundFileNamed:@"playerShotMeteor.mp3" waitForCompletion:NO]];
         Meteor *meteor = (Meteor *)contact.bodyB.node;
         meteor.health = meteor.health - self.player.laserDamage;
         if (meteor.health <= 0) {
@@ -172,6 +202,7 @@ static const uint32_t powerUpCategory           =  0x1 << 4;
     }
     
     if (contact.bodyA.categoryBitMask == playerLaserCategory && contact.bodyB.categoryBitMask == enemyCategory) {
+        [self runAction:[SKAction playSoundFileNamed:@"playerShotEnemy.mp3" waitForCompletion:NO]];
         Enemy *enemy = (Enemy *)contact.bodyB.node;
         enemy.health = enemy.health - self.player.laserDamage;
         if (enemy.health <= 0) {
@@ -225,17 +256,17 @@ static const uint32_t powerUpCategory           =  0x1 << 4;
 
 - (void)createSceneContents {
     
-//    NSError *err;
-//    NSURL *file = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"backgroundMusic.wav" ofType:nil]];
-//    self.backgroundAudioPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:file error:&err];
-//    if (err) {
-//        NSLog(@"error in audio play %@",[err userInfo]);
-//        return;
-//    }
-//    [self.backgroundAudioPlayer prepareToPlay];
-//    self.backgroundAudioPlayer.numberOfLoops = -1;
-//    [self.backgroundAudioPlayer setVolume:1.0];
-//    [self.backgroundAudioPlayer play];
+    NSError *err;
+    NSURL *file = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"backgroundMusic.wav" ofType:nil]];
+    self.backgroundAudioPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:file error:&err];
+    if (err) {
+        NSLog(@"error in audio play %@",[err userInfo]);
+        return;
+    }
+    [self.backgroundAudioPlayer prepareToPlay];
+    self.backgroundAudioPlayer.numberOfLoops = -1;
+    [self.backgroundAudioPlayer setVolume:0.4];
+    [self.backgroundAudioPlayer play];
     
     self.physicsWorld.gravity = CGVectorMake(0,0);
     self.physicsWorld.contactDelegate = self;
@@ -254,11 +285,12 @@ static const uint32_t powerUpCategory           =  0x1 << 4;
     self.laserCounter       = 0;
     
     self.meteorCounter              = 500;
-    self.meteorCounterMaxValue      = 1000;
+    self.meteorCounterMaxValue      = 1400;
     self.enemyCounter               = 1000;
-    self.enemyCounterMaxValue       = 1500;
+    self.enemyCounterMaxValue       = 1600;
     self.counterOfEnemies           = 0;
     self.counterOfEnemiesMaxValue   = 2;
+    self.enemyType                  = 0;
     
     [[SceneManager sharedSceneManager] generateBasicStars:self];
     [[SceneManager sharedSceneManager] createBackgroundWithScene:self imageNamed:BACKGROUND_PURPLE];
@@ -287,7 +319,7 @@ static const uint32_t powerUpCategory           =  0x1 << 4;
     [self addChild:leftControl];
     
     SKSpriteNode *rightControl = [self createControlWithName:RIGHT_SHADED_CONTROL pressedControlName:RIGHT_FLAT_CONTROL];
-    rightControl.position = CGPointMake(self.size.width-rightControl.size.width, 10);
+    rightControl.position = CGPointMake(self.size.width-rightControl.size.width-10, 10);
     [self addChild:rightControl];
     
 }
@@ -371,6 +403,7 @@ static const uint32_t powerUpCategory           =  0x1 << 4;
     if (!self.gameOver) {
         self.gameOver = YES;
         [self runAction:[SKAction waitForDuration:0.4] completion:^{
+            [self.backgroundAudioPlayer stop];
             SKScene *gameOverScene = [[GameOverScene alloc] initWithSize:self.size];
             SKTransition *fadeTransition = [SKTransition fadeWithDuration:1];
             [self.view presentScene:gameOverScene transition:fadeTransition];
@@ -392,7 +425,7 @@ static const uint32_t powerUpCategory           =  0x1 << 4;
     self.player.physicsBody = [SKPhysicsBody bodyWithTexture:self.player.texture size:self.player.texture.size];
     self.player.physicsBody.dynamic = NO;
     self.player.physicsBody.categoryBitMask     = playerCategory;
-    self.player.physicsBody.collisionBitMask    = meteorCategory | powerUpCategory;
+    self.player.physicsBody.collisionBitMask    = meteorCategory | powerUpCategory | enemyLaserCategory;
     self.player.physicsBody.contactTestBitMask  = meteorCategory | powerUpCategory;
     
     [self addChild:self.player];
@@ -475,6 +508,11 @@ static const uint32_t powerUpCategory           =  0x1 << 4;
     
     //Level Up
     if (self.gameScore / 2000 > self.gameScoreCounter) {
+        if (self.enemyType == 3)
+            self.enemyType = 0;
+        else
+            self.enemyType++;
+            
         self.complexityDelta = self.complexityDelta + 0.2;
         self.backgroundSpeed++;
         self.currentLevel++;
@@ -613,7 +651,28 @@ static const uint32_t powerUpCategory           =  0x1 << 4;
     
     if (self.enemyCounter > maxValue/self.complexityDelta && self.counterOfEnemies < self.counterOfEnemiesMaxValue) {
         
-        Enemy *enemy = [Enemy spriteNodeWithImageNamed:@"enemyBlack1"];
+        NSString *enemyType = @"enemyBlack";
+        
+        switch (self.enemyType) {
+            case 0:
+                enemyType = @"enemyBlack";
+                break;
+            case 1:
+                enemyType = @"enemyBlue";
+                break;
+            case 2:
+                enemyType = @"enemyGreen";
+                break;
+            case 3:
+                enemyType = @"enemyRed";
+                break;
+                
+            default:
+                enemyType = @"enemyBlack";
+                break;
+        }
+        
+        Enemy *enemy = [Enemy spriteNodeWithImageNamed:[NSString stringWithFormat:@"%@%ld", enemyType, (long)arc4random_uniform(5)+1]];
         
         enemy.position = CGPointMake((arc4random() % (uint32_t)self.size.width), self.size.height + enemy.size.height);
         enemy.zPosition = 5;
@@ -625,16 +684,41 @@ static const uint32_t powerUpCategory           =  0x1 << 4;
         
         enemy.health = 2;
         enemy.scoreWeight = 100;
+        enemy.name = ENEMY;
         
         SKAction *randomMovement = [SKAction runBlock:^(void){
             SKAction *move = [SKAction moveTo:CGPointMake(arc4random_uniform(self.size.width),
                                                            arc4random_uniform(self.size.height/2)+self.size.height/2) duration:5.0];
             [enemy runAction:move];
         }];
+        
+        SKAction *shot = [SKAction runBlock:^(void){
+            SKSpriteNode *enemyLaser = [SKSpriteNode spriteNodeWithImageNamed:@"laserGreen08"];
+            enemyLaser.anchorPoint = CGPointMake(0.5, 1);
+            enemyLaser.position = CGPointMake(enemy.position.x, enemy.position.y-enemy.size.height/2);
+            enemyLaser.zPosition = 5;
+            [enemyLaser setScale:0.8];
+            enemyLaser.name = ENEMY_LASER;
+            
+            enemyLaser.physicsBody = [SKPhysicsBody bodyWithRectangleOfSize:enemyLaser.size];
+            enemyLaser.physicsBody.allowsRotation = NO;
+            enemyLaser.physicsBody.categoryBitMask      = enemyLaserCategory;
+            enemyLaser.physicsBody.collisionBitMask     = playerCategory;
+            enemyLaser.physicsBody.contactTestBitMask   = playerCategory;
+            
+            [enemyLaser runAction:[SKAction moveTo:CGPointMake(enemy.position.x, 0) duration:1.5] completion:^{
+                [enemyLaser removeFromParent];
+            }];
+            [self addChild:enemyLaser];
+
+        }];
+        
+        SKAction *group = [SKAction sequence:@[[SKAction waitForDuration:2.5], shot, [SKAction waitForDuration:2.5], shot]];
+        
         SKAction *wait = [SKAction waitForDuration:5.0];
         SKAction *sequence = [SKAction sequence:@[randomMovement, wait]];
-        SKAction *repeat = [SKAction repeatActionForever:sequence];
-        [enemy runAction:repeat];
+        [enemy runAction:[SKAction repeatActionForever:sequence]];
+        [enemy runAction:[SKAction repeatActionForever:group]];
         [self addChild:enemy];
         
         self.counterOfEnemies++;

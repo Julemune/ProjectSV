@@ -142,7 +142,7 @@
     star.alpha = 0.6;
     [star setScale:0.4];
     
-    SKAction *moveAction = [SKAction moveToY:0 - star.size.width duration:5/speedDelta];
+    SKAction *moveAction = [SKAction moveToY:0 - star.size.width duration:5-(speedDelta+speedDelta)];
     [star runAction:moveAction completion:^{
         [star removeFromParent];
     }];

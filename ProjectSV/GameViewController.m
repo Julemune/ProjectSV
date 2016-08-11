@@ -11,7 +11,7 @@
     skView.showsFPS = YES;
     skView.showsNodeCount = YES;
     
-    skView.showsPhysics = YES;
+//    skView.showsPhysics = YES;
     
     skView.ignoresSiblingOrder = YES;
     

@@ -53,6 +53,8 @@
 
 - (void)createMenuItems {
     
+    [self runAction:[SKAction playSoundFileNamed:@"lose.mp3" waitForCompletion:NO]];
+    
     SKLabelNode *gameOverLabel  = [SKLabelNode labelNodeWithText:@"GAME OVER"];
     gameOverLabel.position      = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame)+30);
     gameOverLabel.zPosition     = 12;

@@ -4,7 +4,6 @@
 
 - (void)explosionAndRemoveFromParrentOnPoint:(CGPoint)onPoint {
     
-    
     self.physicsBody = nil;
     [self removeFromParent];
     

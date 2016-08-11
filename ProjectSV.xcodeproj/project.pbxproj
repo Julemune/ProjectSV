@@ -24,8 +24,11 @@
 		2E29D28F1D59CB2600A0870F /* GameOverScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 2E29D28E1D59CB2600A0870F /* GameOverScene.m */; };
 		2E29D2921D5A03EC00A0870F /* Meteor.m in Sources */ = {isa = PBXBuildFile; fileRef = 2E29D2911D5A03EC00A0870F /* Meteor.m */; };
 		2E3B71821D5B5175005C0A7D /* Enemy.m in Sources */ = {isa = PBXBuildFile; fileRef = 2E3B71811D5B5175005C0A7D /* Enemy.m */; };
-		2E64AA621D5C8B2000B812C5 /* click1.wav in Resources */ = {isa = PBXBuildFile; fileRef = 2E64AA611D5C8B2000B812C5 /* click1.wav */; };
 		2E64AA681D5C8F6B00B812C5 /* backgroundMusic.wav in Resources */ = {isa = PBXBuildFile; fileRef = 2E64AA671D5C8F6B00B812C5 /* backgroundMusic.wav */; };
+		2E64AA6A1D5CACC300B812C5 /* playerShotEnemy.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 2E64AA691D5CACC300B812C5 /* playerShotEnemy.mp3 */; };
+		2E64AA6C1D5CAD1F00B812C5 /* enemyShotPlayer.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 2E64AA6B1D5CAD1F00B812C5 /* enemyShotPlayer.mp3 */; };
+		2E64AA6E1D5CAD3400B812C5 /* playerShotMeteor.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 2E64AA6D1D5CAD3400B812C5 /* playerShotMeteor.mp3 */; };
+		2E64AA741D5CB20100B812C5 /* lose.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 2E64AA731D5CB20100B812C5 /* lose.mp3 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -78,8 +81,11 @@
 		2E29D2911D5A03EC00A0870F /* Meteor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Meteor.m; sourceTree = "<group>"; };
 		2E3B71801D5B5175005C0A7D /* Enemy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Enemy.h; sourceTree = "<group>"; };
 		2E3B71811D5B5175005C0A7D /* Enemy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Enemy.m; sourceTree = "<group>"; };
-		2E64AA611D5C8B2000B812C5 /* click1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = click1.wav; sourceTree = "<group>"; };
 		2E64AA671D5C8F6B00B812C5 /* backgroundMusic.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = backgroundMusic.wav; sourceTree = "<group>"; };
+		2E64AA691D5CACC300B812C5 /* playerShotEnemy.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = playerShotEnemy.mp3; sourceTree = "<group>"; };
+		2E64AA6B1D5CAD1F00B812C5 /* enemyShotPlayer.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = enemyShotPlayer.mp3; sourceTree = "<group>"; };
+		2E64AA6D1D5CAD3400B812C5 /* playerShotMeteor.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = playerShotMeteor.mp3; sourceTree = "<group>"; };
+		2E64AA731D5CB20100B812C5 /* lose.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = lose.mp3; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -213,8 +219,11 @@
 		2E64AA601D5C8A4700B812C5 /* Sounds */ = {
 			isa = PBXGroup;
 			children = (
+				2E64AA731D5CB20100B812C5 /* lose.mp3 */,
+				2E64AA691D5CACC300B812C5 /* playerShotEnemy.mp3 */,
+				2E64AA6D1D5CAD3400B812C5 /* playerShotMeteor.mp3 */,
+				2E64AA6B1D5CAD1F00B812C5 /* enemyShotPlayer.mp3 */,
 				2E64AA671D5C8F6B00B812C5 /* backgroundMusic.wav */,
-				2E64AA611D5C8B2000B812C5 /* click1.wav */,
 			);
 			name = Sounds;
 			sourceTree = "<group>";
@@ -323,10 +332,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2E64AA621D5C8B2000B812C5 /* click1.wav in Resources */,
 				2E278CA11D549DE300D5B59C /* LaunchScreen.storyboard in Resources */,
+				2E64AA741D5CB20100B812C5 /* lose.mp3 in Resources */,
 				2E278CD41D54AB0100D5B59C /* kenvector_future.ttf in Resources */,
 				2E278C9E1D549DE300D5B59C /* Assets.xcassets in Resources */,
+				2E64AA6A1D5CACC300B812C5 /* playerShotEnemy.mp3 in Resources */,
+				2E64AA6C1D5CAD1F00B812C5 /* enemyShotPlayer.mp3 in Resources */,
+				2E64AA6E1D5CAD3400B812C5 /* playerShotMeteor.mp3 in Resources */,
 				2E278CD31D54AAFF00D5B59C /* kenvector_future_thin.ttf in Resources */,
 				2E278C9C1D549DE300D5B59C /* Main.storyboard in Resources */,
 				2E64AA681D5C8F6B00B812C5 /* backgroundMusic.wav in Resources */,
